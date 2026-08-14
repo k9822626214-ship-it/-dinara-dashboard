@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dinara Algos — Portfolio Pulse</title>
+<style>
+  :root{
+    --bg:#080b14; --panel:#0f1526; --panel2:#131a2e;
+    --border:#1e2740; --border-soft:#182036;
+    --text:#e7ecf7; --sub:#7c88a8;
+    --teal:#2dd9c4; --orange:#ff9452; --green:#3ddc84; --red:#ff5c72;
+    --purple:#b48cff; --blue:#5aa9ff; --gold:#ffd166;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #101a33 0%, transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, #14122b 0%, transparent 55%),
+      var(--bg);
+    color:var(--text); font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    padding:20px; min-height:100vh;
+  }
+  .wrap{max-width:1280px;margin:0 auto;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal);}
+  .brand h1{font-size:20px;margin:0;letter-spacing:.3px;font-weight:700;}
+  .brand small{color:var(--sub);font-weight:400;margin-left:6px;font-size:12px;}
+  .meta-badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--sub);white-space:nowrap;}
+
+  .input-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px;}
+  .input-panel .row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+  .input-panel textarea{flex:1;min-width:280px;height:110px;background:#0a0f1f;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:'SFMono-Regular',Consolas,monospace;font-size:12.5px;resize:vertical;}
+  .input-panel .hint{color:var(--sub);font-size:11.5px;margin-top:8px;line-height:1.5;}
+  .btns{display:flex;flex-direction:column;gap:8px;min-width:150px;}
+  button.act{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap;}
+  .btn-primary{background:linear-gradient(135deg,var(--teal),#1fb8a5);color:#00201c;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-ghost{background:#141b30;border:1px solid #2c3a63;color:#c7cfe6;}
+  .btn-ghost:hover{color:var(--text);border-color:var(--teal);background:#182140;}
+  .err-banner{display:none;background:rgba(255,92,114,.1);border:1px solid #7a2c3a;color:#ff9fae;border-radius:8px;padding:8px 12px;font-size:12px;margin-top:10px;}
+  .donut-wrap{display:flex;align-items:center;justify-content:center;}
+  .entry-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .cap-settings{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;padding-bottom:16px;border-bottom:1px solid var(--border-soft);}
+  .cap-readout{background:#0a0f1f;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:13px;white-space:nowrap;}
+  .efield{display:flex;flex-direction:column;gap:5px;min-width:150px;flex:1;}
+  .efield label{font-size:10.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;}
+  .efield input{background:#0a0f1f;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:13px;}
+  .efield input:focus{outline:none;border-color:var(--teal);}
+  details summary::marker{color:var(--sub);}
+  details[open] summary{margin-bottom:4px;}
+
+  .date-field{position:relative;}
+  .date-display{width:100%;text-align:left;background:#0a0f1f;color:var(--text);border:1px solid var(--border);
+    border-radius:9px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
+  .date-display:hover{border-color:var(--teal);}
+  .dp-panel{position:absolute;top:calc(100% + 8px);left:0;z-index:60;width:266px;
+    background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:14px;
+    box-shadow:0 16px 34px rgba(0,0,0,.55);}
+  .dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .dp-header span{font-size:13px;font-weight:700;color:var(--text);}
+  .dp-header button{background:transparent;border:1px solid var(--border);color:var(--sub);font-size:14px;
+    width:26px;height:26px;border-radius:7px;cursor:pointer;line-height:1;}
+  .dp-header button:hover{color:var(--text);border-color:var(--teal);}
+  .dp-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:6px;}
+  .dp-weekdays span{font-size:10px;color:var(--sub);font-weight:600;}
+  .dp-days{display:grid;grid-template-columns:repeat(7,1fr);row-gap:3px;}
+  .dp-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;
+    border-radius:50%;cursor:pointer;color:var(--text);}
+  .dp-day:hover{background:#182140;}
+  .dp-day.muted{color:#3a4266;cursor:default;}
+  .dp-day.muted:hover{background:transparent;}
+  .dp-day.today{border:1px solid var(--teal);}
+  .dp-day.selected{background:var(--teal);color:#00201c;font-weight:700;}
+  .dp-footer{border-top:1px solid var(--border-soft);margin-top:10px;padding-top:10px;text-align:right;}
+  .dp-today{background:transparent;border:none;color:var(--teal);font-size:12px;font-weight:600;cursor:pointer;}
+  .dp-today:hover{text-decoration:underline;}
+  #entryExchangeSeg{align-items:stretch;}
+  #entryExchangeSeg button{flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;padding:0 10px;}
+
+  .filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:18px;}
+  .filterbar label{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-right:6px;}
+  .seg{display:flex;background:#0a0f1f;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .seg button{background:transparent;border:none;color:var(--sub);padding:7px 13px;font-size:12.5px;cursor:pointer;}
+  .seg button.on{background:var(--teal);color:#00201c;font-weight:700;}
+  .spacer{flex:1;}
+
+  .cards{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:20px;}
+  @media(max-width:1300px){.cards{grid-template-columns:repeat(4,1fr);}}
+  @media(max-width:640px){.cards{grid-template-columns:repeat(2,1fr);}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative;overflow:hidden;}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;}
+  .card.net::before{background:var(--teal);}
+  .card.charges::before{background:var(--orange);}
+  .card.days::before{background:var(--gold);}
+  .card.win::before{background:var(--green);}
+  .card.cap::before{background:var(--blue);}
+  .card.roi::before{background:var(--purple);}
+  .card.dd::before{background:var(--red);}
+  .card.peak::before{background:var(--orange);}
+  .card .ico{font-size:20px;margin-bottom:6px;}
+  .card .lbl{font-size:10.5px;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+  .card .val{font-size:21px;font-weight:700;}
+  .card .sub2{font-size:11px;color:var(--sub);margin-top:4px;}
+  .val.pos{color:var(--green);} .val.neg{color:var(--red);}
+
+  .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:16px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media(max-width:1300px){.grid3{grid-template-columns:1fr 1fr;}}
+  @media(max-width:1000px){.grid2,.grid3{grid-template-columns:1fr;}}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column;}
+  #equityChart, #capitalChart{flex:1;min-height:180px;display:flex;align-items:stretch;}
+  #equityChart svg, #capitalChart svg{width:100%;height:100%;display:block;}
+  .panel h3{margin:0 0 14px;font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:#c7cfe6;display:flex;align-items:center;justify-content:space-between;}
+  .panel h3 .seg button{padding:5px 10px;font-size:11px;}
+
+  .heat-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+  .heat-table th{color:var(--sub);font-weight:500;padding:6px 4px;text-align:center;}
+  .heat-table td{padding:4px;text-align:center;}
+  .heat-table .fy-lbl{text-align:left;color:var(--sub);font-weight:600;padding-right:8px;white-space:nowrap;}
+  .heat-cell{border-radius:6px;padding:6px 4px;font-weight:600;font-size:11px;min-width:52px;display:inline-block;width:100%;}
+  .heat-empty{color:#3a4266;}
+
+  .qrow,.wrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border-soft);}
+  .qrow:last-child,.wrow:last-child{border-bottom:none;}
+  .qrow .name,.wrow .name{color:var(--sub);font-size:12.5px;width:100px;}
+  .barwrap{flex:1;height:8px;background:#0a0f1f;border-radius:5px;margin:0 12px;overflow:hidden;position:relative;}
+  .barfill{height:100%;border-radius:5px;}
+  .qrow .amt,.wrow .amt{font-size:13px;font-weight:600;width:110px;text-align:right;}
+
+  .legend{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .legend .li{display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+  .legend .li .k{display:flex;align-items:center;gap:8px;color:var(--sub);}
+  .dot2{width:9px;height:9px;border-radius:50%;}
+
+  .stat-pair{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;}
+  .stat-box{flex:1;min-width:110px;background:#0a0f1f;border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;}
+  .stat-box .lbl{font-size:10px;color:var(--sub);text-transform:uppercase;}
+  .stat-box .v{font-size:15px;font-weight:700;margin-top:2px;}
+
+  .tablewrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  table.strat{width:100%;border-collapse:collapse;font-size:13px;}
+  table.strat thead th{background:#0c1122;color:var(--sub);font-weight:600;text-align:right;padding:12px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);}
+  table.strat thead th:first-child{text-align:left;}
+  table.strat thead th:hover{color:var(--text);}
+  table.strat tbody td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--border-soft);}
+  table.strat tbody td:first-child{text-align:left;color:var(--sub);}
+  table.strat tbody tr:hover{background:#0d1428;}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--sub);}
+  .empty-state b{color:var(--text);}
+
+  /* ===== Intraday Report modal ===== */
+  #idrOverlay{position:fixed;inset:0;background:rgba(5,7,14,.96);z-index:1000;display:none;overflow-y:auto;padding:24px 14px 60px;}
+  .idr-bar{max-width:1080px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .idr-bar .idr-heading{color:#e8ecf7;font-size:15px;font-weight:800;letter-spacing:.5px;margin-right:auto;}
+  .idr-card{max-width:1080px;margin:0 auto 26px;background:#f2f3f6;border-radius:22px;padding:36px 40px 40px;color:#111318;font-family:"Segoe UI",-apple-system,Arial,sans-serif;}
+  .idr-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;gap:16px;}
+  .idr-head h1{font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1;margin:0;}
+  .idr-head .sub{color:#8a8f99;font-size:18px;margin-top:8px;font-weight:500;}
+  .idr-meta{text-align:right;}
+  .idr-meta .tag{display:inline-block;background:#0f1115;color:#fff;font-size:12px;font-weight:800;letter-spacing:1.5px;padding:6px 13px;border-radius:8px;margin-bottom:8px;}
+  .idr-meta .dt{font-size:21px;font-weight:800;}
+  .idr-meta .tm{color:#8a8f99;font-size:13px;font-weight:600;margin-top:2px;}
+  .idr-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+  .idr-tile{border-radius:16px;padding:22px 20px;}
+  .idr-tile .lb{font-size:13px;font-weight:800;letter-spacing:1.2px;color:#3a3f47;text-transform:uppercase;}
+  .idr-tile .vl{font-size:29px;font-weight:900;margin-top:12px;letter-spacing:-.5px;}
+  .idr-tile .sb{font-size:15px;font-weight:700;margin-top:9px;}
+  .idr-pos{color:#16a34a;} .idr-neg{color:#e11d48;} .idr-ink{color:#111318;}
+  .idr-thead{display:grid;grid-template-columns:1.1fr 1fr 1.2fr 1fr 1fr 1.3fr;gap:8px;padding:0 24px;margin-bottom:10px;}
+  .idr-thead div{font-size:13px;font-weight:800;letter-spacing:1.1px;color:#8a8f99;text-transform:uppercase;}
+  .idr-thead div:not(:first-child){text-align:right;}
+  .idr-row{display:grid;grid-template-columns:1.1fr 1fr 1.2fr 1fr 1fr 1.3fr;gap:8px;background:#0f1115;color:#fff;border-radius:14px;padding:24px;align-items:center;}
+  .idr-row .seg{font-size:21px;font-weight:900;}
+  .idr-row .cell{text-align:right;}
+  .idr-row .cell .bg{font-size:20px;font-weight:800;}
+  .idr-row .cell .sm{font-size:13px;font-weight:600;margin-top:3px;}
+  .idr-row .idr-pos{color:#22c55e;} .idr-row .idr-neg{color:#fb7185;}
+  .idr-row .cap .bg{color:#fff;} .idr-row .cap .sm{color:#9aa0ab;}
+  .idr-foot{margin-top:20px;display:flex;justify-content:space-between;align-items:center;}
+  .idr-foot .br{font-size:12px;font-weight:800;letter-spacing:2px;color:#8a8f99;}
+  .idr-foot .nt{font-size:11.5px;color:#8a8f99;font-weight:500;}
+  @media (max-width:820px){
+    .idr-tiles{grid-template-columns:repeat(2,1fr);}
+    .idr-thead{display:none;}
+    .idr-row{grid-template-columns:1fr 1fr;gap:16px;}
+    .idr-row .cell{text-align:left;}
+    .idr-head h1{font-size:32px;}
+    .idr-card{padding:24px 20px 28px;}
+  }
+
+  /* ===== PnL Message Generator (Team View) ===== */
+  #pnlMsgPanel .pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:12px;}
+  #pnlMsgPanel .pm-card{background:#0a0f1f;border:1px solid var(--border);border-radius:12px;padding:16px;}
+  #pnlMsgPanel label{display:block;font-size:11.5px;color:var(--sub);margin:10px 0 4px;}
+  #pnlMsgPanel label:first-child{margin-top:0;}
+  #pnlMsgPanel input[type=number], #pnlMsgPanel input[type=text]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#080b14;color:var(--text);font-size:13px;box-sizing:border-box;}
+  #pnlMsgPanel .pm-btn{width:100%;margin-top:14px;padding:10px;border:none;border-radius:8px;background:#4ade80;color:#0e1117;font-weight:bold;font-size:13px;cursor:pointer;}
+  #pnlMsgPanel .pm-btn:hover{background:#22c55e;}
+  #pnlMsgPanel .pm-btn.ghost{background:#2a2f3a;color:#e6e6e6;}
+  #pnlMsgPanel .pm-btn.ghost:hover{background:#3a4150;}
+  #pnlMsgPanel .pm-preview{width:100%;background:#080b14;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;line-height:1.6;color:var(--text);min-height:150px;resize:vertical;box-sizing:border-box;font-family:inherit;}
+  #pnlMsgPanel .field-block{display:flex;align-items:center;gap:8px;background:#080b14;border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-top:10px;cursor:grab;}
+  #pnlMsgPanel .field-block.dragging{opacity:.4;border:1px dashed #4ade80;}
+  #pnlMsgPanel .drag-handle{color:#565f6e;font-size:16px;letter-spacing:-2px;cursor:grab;user-select:none;padding-right:2px;}
+  #pnlMsgPanel .field-content{flex:1;}
+  #pnlMsgPanel .field-content label{margin:0 0 4px;}
+  #pnlMsgPanel .pm-status{font-size:11.5px;color:var(--sub);margin-top:8px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span><h1>Dinara Algos <small id="viewLabel">Portfolio Pulse · Client View</small></h1></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="syncBadge" class="meta-badge">—</span>
+      <span id="metaBadge" class="meta-badge">No data loaded</span>
+      <button class="act btn-ghost" id="refreshBtn" style="padding:8px 12px;font-size:12px;" onclick="manualRefresh()">⟳ Refresh</button>
+      <button class="act btn-ghost" id="intradayBtn" style="padding:8px 12px;font-size:12px;" onclick="openIntradayReport()">📸 Intraday Report</button>
+      <div style="position:relative;">
+        <button class="act btn-primary" id="modeToggleBtn" style="padding:8px 14px;font-size:12px;" onclick="toggleMode()">Switch to Team View</button>
+        <div class="dp-panel" id="pwPanel" style="display:none;left:auto;right:0;width:220px;">
+          <div style="font-size:11.5px;color:var(--sub);margin-bottom:8px;">Enter Team View password</div>
+          <input type="password" id="teamPwInput" placeholder="Password"
+            style="width:100%;background:#0a0f1f;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px;box-sizing:border-box;"
+            onkeydown="if(event.key==='Enter'){submitTeamPassword();}">
+          <div id="pwError" style="color:var(--red);font-size:11px;margin-bottom:8px;display:none;">Galat password, dobara try karo.</div>
+          <button class="act btn-primary" style="width:100%;padding:8px;font-size:12px;" onclick="submitTeamPassword()">Unlock</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="inputPanel" class="input-panel">
+    <h3 style="margin:0 0 12px;font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:#c7cfe6;">Capital Used</h3>
+    <div class="cap-settings">
+      <div class="efield" style="max-width:230px;">
+        <label>MCX</label>
+        <input type="number" id="capMCX" placeholder="e.g. 300000" onfocus="this.select()" oninput="updateActiveCapitalDisplay()" onchange="saveSettingsRemote()">
+      </div>
+      <div class="efield" style="max-width:230px;">
+        <label>NFO &amp; BFO</label>
+        <input type="number" id="capNFO" placeholder="e.g. 500000" onfocus="this.select()" oninput="updateActiveCapitalDisplay()" onchange="saveSettingsRemote()">
+      </div>
+      <div style="font-size:11.5px;color:var(--sub);align-self:center;">Set once per exchange — stays the same for every new entry until you change it here.</div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:16px 0 12px;">
+      <h3 style="margin:0;font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:#c7cfe6;">Add day-wise entry</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="act btn-ghost" style="padding:6px 10px;font-size:11px;" onclick="exportBackup()">⬇ Backup (JSON)</button>
+        <button class="act btn-ghost" style="padding:6px 10px;font-size:11px;" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="act btn-ghost" style="padding:6px 10px;font-size:11px;" onclick="document.getElementById('importFileInput').click()">⬆ Import Backup</button>
+        <input type="file" id="importFileInput" accept=".json,.csv,.txt" style="display:none" onchange="handleImportFile(event)">
+      </div>
+    </div>
+    <div id="importMsg" style="display:none;font-size:11.5px;color:var(--teal);margin-bottom:10px;"></div>
+    <div class="entry-row">
+      <div class="efield date-field" id="dateFieldWrap">
+        <label>Date</label>
+        <button type="button" class="date-display" id="dateDisplayBtn" onclick="toggleDatePicker()">Select date</button>
+        <input type="hidden" id="entryDate">
+        <div class="dp-panel" id="dpPanel" style="display:none;">
+          <div class="dp-header">
+            <button type="button" onclick="dpChangeMonth(-1)">‹</button>
+            <span id="dpMonthLabel">—</span>
+            <button type="button" onclick="dpChangeMonth(1)">›</button>
+          </div>
+          <div class="dp-weekdays"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+          <div class="dp-days" id="dpDays"></div>
+          <div class="dp-footer"><button type="button" class="dp-today" onclick="dpGoToday()">Today</button></div>
+        </div>
+      </div>
+      <div class="efield" style="min-width:180px;flex:0;">
+        <label>Exchange</label>
+        <div class="seg" id="entryExchangeSeg" style="height:38px;">
+          <button type="button" data-ex="MCX" class="on" onclick="setEntryExchange('MCX')">MCX</button>
+          <button type="button" data-ex="NFO & BFO" onclick="setEntryExchange('NFO & BFO')">NFO &amp; BFO</button>
+        </div>
+      </div>
+      <div class="efield" style="min-width:140px;flex:0;">
+        <label>Using Capital</label>
+        <div id="activeCapitalDisplay" class="cap-readout">—</div>
+      </div>
+      <div class="efield"><label>P&amp;L (+ / −)</label><input type="number" id="entryPnl" placeholder="e.g. 8200 or -3100" onfocus="this.select()" onkeydown="if(event.key==='Enter'){addEntry();}"></div>
+      <button class="act btn-primary" onclick="addEntry()" style="align-self:flex-end;">+ Add Day</button>
+    </div>
+    <div class="err-banner" id="errBanner"></div>
+    <div id="entryTableWrap" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;">Entries so far</span>
+        <button class="act btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="clearData()">Clear All</button>
+      </div>
+      <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:10px;">
+        <table class="strat" id="entryTable"></table>
+      </div>
+    </div>
+
+    <details style="margin-top:16px;">
+      <summary style="cursor:pointer;color:var(--sub);font-size:12px;">Or bulk-paste from Excel / Google Sheets / CSV instead</summary>
+      <div class="row" style="margin-top:10px;">
+        <textarea id="dataInput" placeholder="Paste day-wise data here (comma or tab separated). Header row required.
+Columns: Date, Capital, P&L   (optional: Charges, Exchange — MCX or NFO & BFO)
+
+Example:
+Date,Capital,P&L,Exchange
+01-04-2026,500000,8200,MCX
+02-04-2026,500000,-3100,NFO & BFO"></textarea>
+        <div class="btns">
+          <button class="act btn-primary" onclick="loadData()">⟳ Load Pasted Data</button>
+          <button class="act btn-ghost" onclick="loadSample()">Load Sample Data</button>
+        </div>
+      </div>
+    </details>
+    <div class="hint">P&amp;L jo yahan feed karoge, wahi as-is dashboard aur reports me dikhega — koi charges auto-deduct nahi honge.</div>
+  </div>
+
+  <div id="pnlMsgPanel" class="input-panel" style="display:none;">
+    <details>
+      <summary style="cursor:pointer;font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:#c7cfe6;font-weight:700;">📨 PnL Message Generator (Telegram)</summary>
+      <div style="font-size:11.5px;color:var(--sub);margin-top:8px;">⋮⋮ pakad kar bar ko upar/neeche drag karo — order wahi message me aayega</div>
+      <div class="pm-grid">
+
+        <div class="pm-card" id="dragContainer">
+          <div class="field-block" draggable="true" data-field="pnl">
+            <span class="drag-handle">⋮⋮</span>
+            <div class="field-content">
+              <label>PnL (₹)</label>
+              <input type="number" id="pnl" step="0.01" placeholder="e.g. 999.35">
+            </div>
+          </div>
+          <div class="field-block" draggable="true" data-field="usedCapital">
+            <span class="drag-handle">⋮⋮</span>
+            <div class="field-content">
+              <label>Used Capital (₹) — fixed, badlo tabhi jab zarurat ho</label>
+              <input type="number" id="usedCapital" step="0.01" value="5400000" onchange="saveUsedCapital()">
+            </div>
+          </div>
+          <div class="field-block" draggable="true" data-field="openPos">
+            <span class="drag-handle">⋮⋮</span>
+            <div class="field-content">
+              <label>Open Positions</label>
+              <input type="number" id="openPos" placeholder="e.g. 35">
+            </div>
+          </div>
+          <div class="auto-field" style="margin-top:10px;">
+            <label>PnL % (auto, capital se calculate)</label>
+            <input type="text" id="pnlPctDisplay" disabled>
+          </div>
+          <div class="auto-field" style="margin-top:10px;">
+            <label>Current Time (auto)</label>
+            <input type="text" id="liveClock" disabled>
+          </div>
+          <button class="pm-btn" onclick="generateMessage()">Generate Message</button>
+        </div>
+
+        <div class="pm-card">
+          <label style="font-weight:bold;color:#4ade80;">⚙️ Telegram Settings (ek baar bharo)</label>
+          <label>Bot Token</label>
+          <input type="text" id="botToken" placeholder="123456:AAExxxxxxxxxxxxxx" onchange="saveTelegramConfig()">
+          <label>Chat ID</label>
+          <input type="text" id="chatId" placeholder="-100xxxxxxxxxx" onchange="saveTelegramConfig()">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--text);font-size:12.5px;">
+            <input type="checkbox" id="autoSend" style="width:auto;" onchange="saveTelegramConfig()">
+            Generate dabate hi Telegram pe auto-send karo
+          </label>
+          <button class="pm-btn ghost" onclick="sendToTelegram()">📤 Send to Telegram Now</button>
+          <p id="telegramStatus" class="pm-status"></p>
+        </div>
+
+        <div class="pm-card">
+          <label style="font-weight:bold;color:#4ade80;">Message Preview</label>
+          <textarea class="pm-preview" id="pmOutput" readonly onclick="this.select()">Fill values aur "Generate Message" dabao...</textarea>
+          <button class="pm-btn ghost" onclick="copyMessage()">📋 Copy Message</button>
+          <p id="copyStatus" class="pm-status">Agar copy na ho: box pe click karke Ctrl+A phir Ctrl+C</p>
+        </div>
+
+      </div>
+    </details>
+  </div>
+
+  <div class="filterbar" id="filterBar" style="display:none;">
+    <label>Exchange</label>
+    <div class="seg" id="exchangeFilterSeg">
+      <button data-ex="ALL" class="on">All</button>
+      <button data-ex="MCX">MCX</button>
+      <button data-ex="NFO & BFO">NFO &amp; BFO</button>
+    </div>
+    <div style="width:1px;height:22px;background:var(--border);margin:0 6px;"></div>
+    <label>Equity curve range</label>
+    <div class="seg" id="rangeSeg">
+      <button data-r="1M">1M</button><button data-r="3M">3M</button><button data-r="6M">6M</button>
+      <button data-r="YTD">YTD</button><button data-r="1Y">1Y</button><button data-r="ALL" class="on">ALL</button>
+    </div>
+    <div class="spacer"></div>
+    <span style="font-size:11.5px;color:var(--sub);">Showing exactly what was entered — no charges auto-deducted.</span>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <div id="monthFilterBadge" style="display:none;align-items:center;gap:10px;margin-bottom:12px;">
+      <span class="meta-badge" style="background:rgba(45,217,196,.12);border-color:var(--teal);color:var(--teal);">Showing: <b id="monthFilterLabel"></b></span>
+      <button class="act btn-ghost" style="padding:6px 12px;font-size:11px;" onclick="clearMonthFilter()">✕ View All Time</button>
+    </div>
+    <div class="cards">
+      <div class="card net"><div class="lbl" id="cNetLbl">Total P&L (as entered)</div><div class="val" id="cNet">₹0</div></div>
+      <div class="card charges"><div class="ico">🪙</div><div class="lbl">Total Charges</div><div class="val" id="cCharges">₹0</div></div>
+      <div class="card days"><div class="lbl">Trading Days</div><div class="val" id="cDays">0</div></div>
+      <div class="card win"><div class="lbl">Win Ratio</div><div class="val" id="cWin">0%</div></div>
+      <div class="card cap"><div class="lbl">Used Capital</div><div class="val" id="cUsedCap">₹0</div></div>
+      <div class="card roi"><div class="lbl">ROI (on used capital)</div><div class="val" id="cRoi">0%</div></div>
+      <div class="card dd"><div class="lbl">Max Drawdown</div><div class="val" id="cDD">₹0</div><div class="sub2" id="cDDPct">0%</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h3>Equity Curve &amp; Drawdown
+          <div class="seg" id="equityViewSeg">
+            <button data-v="ec" class="on">EC</button>
+            <button data-v="bar">Bar</button>
+          </div>
+        </h3>
+        <div id="equityChart"></div>
+        <div id="equityFoot" style="display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:6px;"></div>
+      </div>
+      <div class="panel">
+        <h3>Monthly P&L Heatmap
+          <div class="seg" id="heatTabs">
+            <button data-lvl="year" class="on">Year</button>
+            <button data-lvl="month">Month</button>
+            <button data-lvl="day">Day</button>
+          </div>
+        </h3>
+        <div style="overflow-x:auto;"><div id="heatContainer"></div></div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <div class="panel">
+        <h3 id="summaryTitle">P&L Summary (Months)</h3>
+        <div id="summaryDonut" class="donut-wrap"></div>
+        <div class="legend" id="summaryLegend"></div>
+        <div class="stat-pair">
+          <div class="stat-box"><div class="lbl" id="bestLbl">Best Month</div><div class="v pos" id="bestMonth">—</div></div>
+          <div class="stat-box"><div class="lbl" id="worstLbl">Worst Month</div><div class="v neg" id="worstMonth">—</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Net P&L by Quarter</h3>
+        <div id="quarterList"></div>
+      </div>
+      <div class="panel">
+        <h3>Weekday P&L</h3>
+        <div id="weekdayList"></div>
+      </div>
+      <div class="panel">
+        <h3>Net P&L by Week</h3>
+        <div id="weekPanelBody"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h3>Capital Utilization</h3>
+        <div id="capitalChart"></div>
+        <div class="stat-pair">
+          <div class="stat-box"><div class="lbl">Avg Capital</div><div class="v" id="capAvg2">—</div></div>
+          <div class="stat-box"><div class="lbl">Peak Capital</div><div class="v" id="capPeak2">—</div></div>
+          <div class="stat-box"><div class="lbl">Min Capital</div><div class="v" id="capMin2">—</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Risk &amp; Consistency</h3>
+        <div class="stat-pair">
+          <div class="stat-box"><div class="lbl">Avg Win / Avg Loss</div><div class="v" id="avgWinLoss">—</div></div>
+          <div class="stat-box"><div class="lbl">Risk : Reward</div><div class="v" id="riskReward">—</div></div>
+          <div class="stat-box"><div class="lbl">Max Consecutive Loss Days</div><div class="v" id="maxLossStreak">—</div></div>
+        </div>
+        <div class="stat-pair">
+          <div class="stat-box"><div class="lbl">Max Profit Day</div><div class="v pos" id="maxProfitDay">—</div></div>
+          <div class="stat-box"><div class="lbl">Max Loss Day</div><div class="v neg" id="maxLossDay">—</div></div>
+          <div class="stat-box"><div class="lbl">Cost Impact</div><div class="v" id="costImpact">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+      <table class="strat">
+        <thead>
+          <tr>
+            <th onclick="sortBy('date')">Date</th>
+            <th onclick="sortBy('capital')">Capital Used</th>
+            <th onclick="sortBy('pnl')">P&L</th>
+            <th onclick="sortBy('net')">Net P&L</th>
+            <th onclick="sortBy('roi')">ROI %</th>
+            <th onclick="sortBy('equity')">Cum. Equity</th>
+            <th onclick="sortBy('drawdown')">Drawdown</th>
+          </tr>
+        </thead>
+        <tbody id="stratBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="emptyState" class="empty-state">
+    <b>No data yet.</b><br><br>Paste your day-wise Capital Used &amp; P&L data above and click <b>Build Dashboard</b>,<br>or click <b>Load Sample Data</b> to see it in action.
+  </div>
+
+</div>
+
+<div id="idrOverlay">
+  <div class="idr-bar">
+    <div class="idr-heading">INTRADAY REPORT — group me share karne ke liye</div>
+    <button class="act btn-primary" style="padding:8px 14px;font-size:12px;" onclick="idrDownloadAll()">⬇ Download All PNG</button>
+    <button class="act btn-ghost" style="padding:8px 14px;font-size:12px;" onclick="closeIntradayReport()">✕ Close</button>
+  </div>
+  <div id="idrCards"></div>
+</div>
+
+
+<script>
+let RAW = [];      // {date, capital, pnl, charges, net}
+let ENTRIES = [];  // source of truth: manually added + pasted rows merged here
+let RANGE = 'ALL';
+let SORT = {key:'date', dir:-1}; // -1 = newest first (descending)
+let heatState = {level:'year', fyIdx:0, monthIdx:0};
+let monthFilter = null; // {year, month} — when set, whole dashboard (cards, equity curve, charts) scopes to this month
+let autoCharge = {enabled:true, rate:0.75};
+let pnlView = 'net';
+
+// ---- shared sync via Google Sheet (Apps Script Web App) — works on any hosting, no Claude needed ----
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNKJAbwTw6eDJ8yggXhQPyawPKVgdgHGj9_qmqG8w62wXetG2JuYMTY2518GDdjmZnIg/exec';
+const LS_ENTRIES_KEY = 'dinara-entries-local';
+const LS_SETTINGS_KEY = 'dinara-settings-local';
+let lastSavedSignature = '';
+let syncOk = true;
+
+function pad2s(n){ return String(n).padStart(2,'0'); }
+function isoOfDate(d){ return d.getFullYear()+'-'+pad2s(d.getMonth()+1)+'-'+pad2s(d.getDate()); }
+
+function serializeEntries(){
+  return JSON.stringify(ENTRIES.map(e=>({date:isoOfDate(e.date), capital:e.capital, pnl:e.pnl, charges:e.charges||0, exchange:e.exchange||'MCX'})));
+}
+
+function setSyncBadge(text){ const el = document.getElementById('syncBadge'); if(el) el.textContent = text; }
+
+function saveEntriesLocal(){
+  try{ localStorage.setItem(LS_ENTRIES_KEY, serializeEntries()); }catch(err){}
+}
+
+function saveSettingsLocal(){
+  try{
+    const capMcxEl = document.getElementById('capMCX'), capNfoEl = document.getElementById('capNFO');
+    const s = {
+      capMCX: capMcxEl ? capMcxEl.value : '',
+      capNFO: capNfoEl ? capNfoEl.value : '',
+      autoChargeEnabled: autoCharge.enabled,
+      autoChargeRate: autoCharge.rate
+    };
+    localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify(s));
+  }catch(err){}
+}
+
+function loadFromLocal(){
+  try{
+    const raw = localStorage.getItem(LS_ENTRIES_KEY);
+    if(raw){
+      const arr = JSON.parse(raw);
+      ENTRIES = arr.map(e=>{
+        const [y,m,d] = e.date.split('-').map(Number);
+        return {date:new Date(y,m-1,d), capital:e.capital, pnl:e.pnl, charges:e.charges||0, exchange:e.exchange||'MCX'};
+      }).sort((a,b)=>a.date-b.date || a.exchange.localeCompare(b.exchange));
+    }
+  }catch(err){}
+  try{
+    const rawS = localStorage.getItem(LS_SETTINGS_KEY);
+    if(rawS){
+      const s = JSON.parse(rawS);
+      const capMcxEl = document.getElementById('capMCX'), capNfoEl = document.getElementById('capNFO');
+      if(capMcxEl && s.capMCX!==undefined) capMcxEl.value = s.capMCX;
+      if(capNfoEl && s.capNFO!==undefined) capNfoEl.value = s.capNFO;
+      if(typeof s.autoChargeEnabled==='boolean'){ autoCharge.enabled = s.autoChargeEnabled; const t=document.getElementById('autoChargeToggle'); if(t) t.checked = s.autoChargeEnabled; }
+      if(s.autoChargeRate){ autoCharge.rate = parseFloat(s.autoChargeRate); const r=document.getElementById('autoChargeRate'); if(r) r.value = s.autoChargeRate; }
+      updateActiveCapitalDisplay();
+    }
+  }catch(err){}
+}
+
+async function saveEntriesRemote(){
+  saveEntriesLocal();
+  try{
+    const payload = serializeEntries();
+    if(payload===lastSavedSignature) return;
+    await fetch(APPS_SCRIPT_URL + '?key=entries', {method:'POST', body: payload});
+    lastSavedSignature = payload;
+    syncOk = true;
+    setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+  }catch(err){
+    syncOk = false;
+    setSyncBadge('Saved locally only (sync failed)');
+  }
+}
+
+async function saveSettingsRemote(){
+  saveSettingsLocal();
+  try{
+    const s = {
+      capMCX: document.getElementById('capMCX') ? document.getElementById('capMCX').value : '',
+      capNFO: document.getElementById('capNFO') ? document.getElementById('capNFO').value : '',
+      autoChargeEnabled: autoCharge.enabled,
+      autoChargeRate: autoCharge.rate
+    };
+    await fetch(APPS_SCRIPT_URL + '?key=settings', {method:'POST', body: JSON.stringify(s)});
+  }catch(err){}
+}
+
+async function loadFromRemote(silent){
+  loadFromLocal(); // instant local fill while remote fetch is in flight
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?key=entries');
+    const text = await res.text();
+    if(text){
+      const arr = JSON.parse(text);
+      const incoming = arr.map(e=>{
+        const [y,m,d] = e.date.split('-').map(Number);
+        return {date:new Date(y,m-1,d), capital:e.capital, pnl:e.pnl, charges:e.charges||0, exchange:e.exchange||'MCX'};
+      }).sort((a,b)=>a.date-b.date || a.exchange.localeCompare(b.exchange));
+      const incomingSig = JSON.stringify(incoming.map(e=>({date:isoOfDate(e.date),capital:e.capital,pnl:e.pnl,charges:e.charges,exchange:e.exchange})));
+      if(incomingSig !== lastSavedSignature){
+        ENTRIES = incoming;
+        lastSavedSignature = incomingSig;
+        saveEntriesLocal();
+        if(!isTypingInEntryForm()) rebuildFromEntries();
+      }
+    }
+    syncOk = true;
+    if(!silent) setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+  }catch(err){
+    syncOk = false;
+    setSyncBadge('Local only (sync unavailable)');
+  }
+  try{
+    const res2 = await fetch(APPS_SCRIPT_URL + '?key=settings');
+    const text2 = await res2.text();
+    if(text2 && !isTypingInEntryForm()){
+      const s = JSON.parse(text2);
+      const capMcxEl = document.getElementById('capMCX'), capNfoEl = document.getElementById('capNFO');
+      if(capMcxEl && s.capMCX!==undefined) capMcxEl.value = s.capMCX;
+      if(capNfoEl && s.capNFO!==undefined) capNfoEl.value = s.capNFO;
+      if(typeof s.autoChargeEnabled==='boolean'){ autoCharge.enabled = s.autoChargeEnabled; const t=document.getElementById('autoChargeToggle'); if(t) t.checked = s.autoChargeEnabled; }
+      if(s.autoChargeRate){ autoCharge.rate = parseFloat(s.autoChargeRate); const r=document.getElementById('autoChargeRate'); if(r) r.value = s.autoChargeRate; }
+      updateActiveCapitalDisplay();
+      saveSettingsLocal();
+    }
+  }catch(err){}
+}
+
+function isTypingInEntryForm(){
+  const a = document.activeElement;
+  if(!a) return false;
+  return ['entryPnl','capMCX','capNFO','autoChargeRate','dataInput'].includes(a.id);
+}
+
+async function manualRefresh(){
+  const btn = document.getElementById('refreshBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '⟳ Refreshing…'; }
+  await loadFromRemote(true);
+  rebuildFromEntries();
+  setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+  if(btn){ btn.disabled = false; btn.textContent = '⟳ Refresh'; }
+}
+
+const TEAM_VIEW_PASSWORD = 'Ditya2015';
+let currentMode = 'client'; // always starts safe — Team View must be unlocked with the password
+
+function applyMode(){
+  const panel = document.getElementById('inputPanel');
+  if(panel) panel.style.display = currentMode==='client' ? 'none' : 'block';
+  const pmPanel = document.getElementById('pnlMsgPanel');
+  if(pmPanel) pmPanel.style.display = currentMode==='client' ? 'none' : 'block';
+  const btn = document.getElementById('modeToggleBtn');
+  if(btn) btn.textContent = currentMode==='client' ? 'Switch to Team View' : 'Switch to Client View';
+  const lbl = document.getElementById('viewLabel');
+  if(lbl) lbl.textContent = currentMode==='client' ? 'Portfolio Pulse · Client View' : 'Portfolio Pulse';
+}
+
+function togglePasswordPanel(show){
+  const p = document.getElementById('pwPanel');
+  if(!p) return;
+  p.style.display = show ? 'block' : 'none';
+  if(show){
+    document.getElementById('teamPwInput').value = '';
+    document.getElementById('pwError').style.display = 'none';
+    document.getElementById('teamPwInput').focus();
+  }
+}
+
+function submitTeamPassword(){
+  const val = document.getElementById('teamPwInput').value.trim();
+  if(val === TEAM_VIEW_PASSWORD){
+    currentMode = 'admin';
+    togglePasswordPanel(false);
+    applyMode();
+  } else {
+    document.getElementById('pwError').style.display = 'block';
+  }
+}
+
+function toggleMode(){
+  if(currentMode === 'admin'){
+    currentMode = 'client';
+    applyMode();
+    return;
+  }
+  togglePasswordPanel(true);
+}
+
+document.addEventListener('click', e=>{
+  const p = document.getElementById('pwPanel');
+  const btn = document.getElementById('modeToggleBtn');
+  if(p && p.style.display==='block' && !p.contains(e.target) && e.target!==btn) togglePasswordPanel(false);
+});
+
+function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+
+const FIXED_TRADING_DAYS_PER_MONTH = 21;
+
+// Net/Gross toggle removed — dashboard now always shows exactly the P&L value
+// that was fed in, with zero auto-deducted charges anywhere.
+function getEffectiveRows(){
+  return RAW.map(r=>({...r, charges:0, net:r.pnl}));
+}
+
+function fmtINR(n, short){
+  const neg = n < 0; n = Math.abs(n);
+  let out;
+  if(short){
+    if(n >= 100000){ out = '₹' + (n/100000).toFixed(n>=1000000?1:2).replace(/\.0$/,'') + 'L'; }
+    else if(n >= 1000){ out = '₹' + (n/1000).toFixed(1).replace(/\.0$/,'') + 'K'; }
+    else { out = '₹' + Math.round(n); }
+  } else {
+    out = '₹' + n.toLocaleString('en-IN', {maximumFractionDigits:0});
+  }
+  return (neg?'-':'') + out;
+}
+
+function parseDate(s){
+  s = (s||'').trim(); let m;
+  if(m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/)) return new Date(+m[1], +m[2]-1, +m[3]);
+  if(m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/)) return new Date(+m[3], +m[2]-1, +m[1]);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+function fyLabel(d){ const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear()-1; return 'FY ' + String(y).slice(2) + '-' + String(y+1).slice(2); }
+const FY_MONTHS = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+function fyMonthIndex(d){ const m = d.getMonth(); return m >= 3 ? m-3 : m+9; }
+
+function splitLine(line, delim){ return line.split(delim).map(s=>s.trim()); }
+
+function parseInput(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+  if(!lines.length) return [];
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const header = splitLine(lines[0], delim).map(h=>h.toLowerCase());
+  const idx = (names)=>{ for(const n of names){ const i = header.indexOf(n); if(i>=0) return i; } return -1; };
+  const iDate = idx(['date']);
+  const iCapital = idx(['capital','capital used','capital deployed']);
+  const iPnl = idx(['p&l','pnl','p and l','profit','profit & loss','p/l']);
+  const iCharges = idx(['charges']);
+  const iExchange = idx(['exchange']);
+
+  const normEx = (v)=>{
+    v = (v||'').trim().toUpperCase();
+    if(!v) return 'MCX';
+    if(v.includes('MCX')) return 'MCX';
+    if(v.includes('NFO') || v.includes('BFO')) return 'NFO & BFO';
+    return v;
+  };
+
+  const map = new Map(); // dedupe/aggregate by date+exchange
+  for(let i=1;i<lines.length;i++){
+    const c = splitLine(lines[i], delim);
+    if(c.length < 2) continue;
+    const date = iDate>=0 ? parseDate(c[iDate]) : null;
+    if(!date) continue;
+    const capital = iCapital>=0 ? parseFloat((c[iCapital]||'0').replace(/[₹,]/g,'')) : 0;
+    const pnl = iPnl>=0 ? parseFloat((c[iPnl]||'0').replace(/[₹,]/g,'')) : 0;
+    const charges = iCharges>=0 ? Math.abs(parseFloat((c[iCharges]||'0').replace(/[₹,]/g,''))) : 0;
+    const exchange = iExchange>=0 ? normEx(c[iExchange]) : 'MCX';
+    const key = date.toISOString().slice(0,10) + '|' + exchange;
+    if(!map.has(key)) map.set(key, {date, capital:0, pnl:0, charges:0, exchange});
+    const row = map.get(key);
+    row.capital = Math.max(row.capital, isNaN(capital)?0:capital);
+    row.pnl += isNaN(pnl)?0:pnl;
+    row.charges += isNaN(charges)?0:charges;
+  }
+  return [...map.values()].map(r=>({...r, net:r.pnl-r.charges})).sort((a,b)=>a.date-b.date);
+}
+
+function upsertEntry(date, capital, pnl, charges, exchange){
+  charges = charges || 0;
+  exchange = exchange || 'MCX';
+  const key = date.toISOString().slice(0,10) + '|' + exchange;
+  const idx = ENTRIES.findIndex(e=>(e.date.toISOString().slice(0,10)+'|'+e.exchange)===key);
+  if(idx>=0) ENTRIES[idx] = {date, capital, pnl, charges, exchange};
+  else ENTRIES.push({date, capital, pnl, charges, exchange});
+  ENTRIES.sort((a,b)=>a.date-b.date || a.exchange.localeCompare(b.exchange));
+}
+
+let entryExchange = 'MCX';
+function setEntryExchange(ex){
+  entryExchange = ex;
+  document.querySelectorAll('#entryExchangeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.ex===ex));
+  updateActiveCapitalDisplay();
+}
+
+function updateActiveCapitalDisplay(){
+  const capEl = document.getElementById(entryExchange==='MCX' ? 'capMCX' : 'capNFO');
+  const disp = document.getElementById('activeCapitalDisplay');
+  if(capEl && disp){
+    const num = parseFloat(capEl.value);
+    disp.textContent = isNaN(num) ? '—' : fmtINR(num);
+  }
+  updateUsedCapitalCard();
+}
+
+function updateUsedCapitalCard(){
+  if(ENTRIES.length) return; // once real entries exist, render() computes the historically-accurate average — don't override it
+  const capExchange = exchangeFilter==='MCX' ? 'MCX' : 'NFO & BFO';
+  const liveEl = document.getElementById(capExchange==='MCX' ? 'capMCX' : 'capNFO');
+  const usedCapEl = document.getElementById('cUsedCap');
+  if(!liveEl || !usedCapEl) return;
+  const usedCapital = parseFloat(liveEl.value) || 0;
+  usedCapEl.textContent = fmtINR(usedCapital);
+  const roiEl = document.getElementById('cRoi');
+  if(roiEl) roiEl.textContent = usedCapital ? '0.0%' : '—';
+}
+
+let exchangeFilter = 'ALL';
+document.getElementById('exchangeFilterSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  exchangeFilter = b.dataset.ex;
+  document.querySelectorAll('#exchangeFilterSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  rebuildFromEntries();
+});
+
+// ---- custom calendar date picker ----
+let dpViewDate = new Date();
+let dpSelectedDate = null;
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function isoOf(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+
+function setEntryDate(d){
+  dpSelectedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  document.getElementById('entryDate').value = isoOf(dpSelectedDate);
+  document.getElementById('dateDisplayBtn').textContent = dpSelectedDate.toLocaleDateString('en-IN',{weekday:'short', day:'2-digit', month:'short', year:'numeric'});
+}
+
+function toggleDatePicker(){
+  const panel = document.getElementById('dpPanel');
+  const opening = panel.style.display==='none' || !panel.style.display;
+  if(opening){
+    dpViewDate = new Date(dpSelectedDate || new Date());
+    renderDP();
+    panel.style.display='block';
+  } else panel.style.display='none';
+}
+
+function dpChangeMonth(delta){
+  dpViewDate = new Date(dpViewDate.getFullYear(), dpViewDate.getMonth()+delta, 1);
+  renderDP();
+}
+
+function dpSelectDay(y,m,day){
+  setEntryDate(new Date(y,m,day));
+  document.getElementById('dpPanel').style.display='none';
+  document.getElementById('entryPnl').focus();
+}
+
+function dpGoToday(){
+  const t = new Date();
+  dpViewDate = new Date(t);
+  setEntryDate(t);
+  renderDP();
+}
+
+function renderDP(){
+  const y = dpViewDate.getFullYear(), m = dpViewDate.getMonth();
+  document.getElementById('dpMonthLabel').textContent = dpViewDate.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const prevDays = new Date(y,m,0).getDate();
+  const today = new Date();
+  let html = '';
+  for(let i=firstDow-1;i>=0;i--) html += `<div class="dp-day muted">${prevDays-i}</div>`;
+  for(let day=1; day<=daysInMonth; day++){
+    const isSel = dpSelectedDate && dpSelectedDate.getFullYear()===y && dpSelectedDate.getMonth()===m && dpSelectedDate.getDate()===day;
+    const isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===day;
+    html += `<div class="dp-day${isSel?' selected':''}${isToday?' today':''}" onclick="dpSelectDay(${y},${m},${day})">${day}</div>`;
+  }
+  const total = firstDow + daysInMonth;
+  const nextDays = (7 - (total%7))%7;
+  for(let i=1;i<=nextDays;i++) html += `<div class="dp-day muted">${i}</div>`;
+  document.getElementById('dpDays').innerHTML = html;
+}
+
+document.addEventListener('click', e=>{
+  const panel = document.getElementById('dpPanel');
+  const wrap = document.getElementById('dateFieldWrap');
+  if(panel && panel.style.display==='block' && wrap && !wrap.contains(e.target)) panel.style.display='none';
+});
+
+function addEntry(){
+  const dEl = document.getElementById('entryDate');
+  const pEl = document.getElementById('entryPnl');
+  if(!dEl.value){ showError('Pehle date select karo.'); return; }
+  const capEl = document.getElementById(entryExchange==='MCX' ? 'capMCX' : 'capNFO');
+  const capital = parseFloat(capEl.value);
+  const pnl = parseFloat(pEl.value);
+  if(isNaN(capital)){ showError(`Pehle upar "${entryExchange}" ke liye Capital Used bharo.`); return; }
+  if(isNaN(pnl)){ showError('P&L number mein bharo.'); return; }
+  const [y,m,dd] = dEl.value.split('-').map(Number);
+  const date = new Date(y, m-1, dd);
+  upsertEntry(date, capital, pnl, 0, entryExchange);
+  showError(null);
+  const next = new Date(date); next.setDate(next.getDate()+1);
+  while(next.getDay()===0 || next.getDay()===6) next.setDate(next.getDate()+1);
+  setEntryDate(next);
+  pEl.value = '';
+  pEl.focus();
+  rebuildFromEntries();
+}
+
+function deleteEntry(idx){ ENTRIES.splice(idx,1); rebuildFromEntries(); }
+
+function renderEntryTable(){
+  const wrap = document.getElementById('entryTableWrap');
+  if(!wrap) return;
+  if(!ENTRIES.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  document.getElementById('entryTable').innerHTML = `
+    <thead><tr><th>Date</th><th>Exchange</th><th>Capital Used</th><th>P&amp;L</th><th></th></tr></thead>
+    <tbody>${ENTRIES.map((e,i)=>`
+      <tr>
+        <td>${e.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</td>
+        <td style="color:var(--blue);">${e.exchange}</td>
+        <td>${fmtINR(e.capital)}</td>
+        <td style="color:${e.pnl>=0?'#3ddc84':'#ff5c72'}">${fmtINR(e.pnl)}</td>
+        <td style="text-align:center;cursor:pointer;color:var(--sub);width:36px;" onclick="deleteEntry(${i})" title="Remove this day">✕</td>
+      </tr>`).join('')}</tbody>`;
+}
+
+function buildRawFromEntries(){
+  const filtered = exchangeFilter==='ALL' ? ENTRIES : ENTRIES.filter(e=>e.exchange===exchangeFilter);
+  const map = new Map();
+  filtered.forEach(e=>{
+    const key = e.date.toISOString().slice(0,10);
+    if(!map.has(key)) map.set(key, {date:e.date, capital:0, pnl:0, charges:0});
+    const row = map.get(key);
+    row.capital += e.capital;
+    row.pnl += e.pnl;
+    row.charges += e.charges||0;
+  });
+  return [...map.values()].sort((a,b)=>a.date-b.date);
+}
+
+function rebuildFromEntries(){
+  renderEntryTable();
+  RAW = buildRawFromEntries();
+  if(ENTRIES.length){
+    document.getElementById('filterBar').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+    render();
+  } else {
+    document.getElementById('filterBar').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+  }
+  saveEntriesRemote();
+}
+
+function showError(msg){
+  const b = document.getElementById('errBanner');
+  if(!msg){ b.style.display='none'; b.textContent=''; return; }
+  b.style.display='block'; b.textContent = msg;
+}
+
+function loadData(){
+  try{
+    const text = document.getElementById('dataInput').value;
+    const rows = parseInput(text);
+    if(!rows.length){ showError('Could not parse any rows — check that the first line is a header (Date,Capital,P&L) and dates are DD-MM-YYYY, YYYY-MM-DD or DD/MM/YYYY.'); return; }
+    showError(null);
+    rows.forEach(r=>upsertEntry(r.date, r.capital, r.pnl, r.charges, r.exchange));
+    document.getElementById('dataInput').value = '';
+    RANGE = 'ALL';
+    document.querySelectorAll('#rangeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.r==='ALL'));
+    rebuildFromEntries();
+  }catch(err){ showError('Something went wrong: ' + err.message); console.error(err); }
+}
+
+function downloadBlob(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function todayStamp(){
+  const d = new Date();
+  return d.getFullYear()+'-'+pad2s(d.getMonth()+1)+'-'+pad2s(d.getDate());
+}
+
+function exportBackup(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    entries: ENTRIES.map(e=>({date:isoOfDate(e.date), capital:e.capital, pnl:e.pnl, charges:e.charges||0, exchange:e.exchange||'MCX'})),
+    settings: {
+      capMCX: document.getElementById('capMCX') ? document.getElementById('capMCX').value : '',
+      capNFO: document.getElementById('capNFO') ? document.getElementById('capNFO').value : '',
+      autoChargeEnabled: autoCharge.enabled,
+      autoChargeRate: autoCharge.rate
+    }
+  };
+  downloadBlob(JSON.stringify(payload, null, 2), `dinara-backup-${todayStamp()}.json`, 'application/json');
+}
+
+function exportCSV(){
+  const lines = ['Date,Capital,P&L,Charges,Exchange'];
+  ENTRIES.forEach(e=>{
+    lines.push([isoOfDate(e.date), e.capital, e.pnl, e.charges||0, e.exchange||'MCX'].join(','));
+  });
+  downloadBlob(lines.join('\n'), `dinara-entries-${todayStamp()}.csv`, 'text/csv');
+}
+
+function showImportMsg(msg, isError){
+  const el = document.getElementById('importMsg');
+  if(!el) return;
+  el.style.display = 'block';
+  el.style.color = isError ? 'var(--red)' : 'var(--teal)';
+  el.textContent = msg;
+  setTimeout(()=>{ el.style.display='none'; }, 6000);
+}
+
+function handleImportFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const text = e.target.result;
+    try{
+      if(file.name.toLowerCase().endsWith('.json')){
+        const data = JSON.parse(text);
+        const arr = data.entries || data; // support raw array too
+        arr.forEach(e=>{
+          const [y,m,d] = e.date.split('-').map(Number);
+          upsertEntry(new Date(y,m-1,d), e.capital, e.pnl, e.charges||0, e.exchange||'MCX');
+        });
+        if(data.settings){
+          const s = data.settings;
+          const capMcxEl = document.getElementById('capMCX'), capNfoEl = document.getElementById('capNFO');
+          if(capMcxEl && s.capMCX!==undefined) capMcxEl.value = s.capMCX;
+          if(capNfoEl && s.capNFO!==undefined) capNfoEl.value = s.capNFO;
+          if(typeof s.autoChargeEnabled==='boolean'){ autoCharge.enabled = s.autoChargeEnabled; const t=document.getElementById('autoChargeToggle'); if(t) t.checked = s.autoChargeEnabled; }
+          if(s.autoChargeRate){ autoCharge.rate = parseFloat(s.autoChargeRate); const r=document.getElementById('autoChargeRate'); if(r) r.value = s.autoChargeRate; }
+          saveSettingsRemote();
+        }
+        showImportMsg(`Imported ${arr.length} entries from backup.`, false);
+      } else {
+        const rows = parseInput(text);
+        if(!rows.length){ showImportMsg('Could not read any rows from this file.', true); return; }
+        rows.forEach(r=>upsertEntry(r.date, r.capital, r.pnl, r.charges, r.exchange));
+        showImportMsg(`Imported ${rows.length} entries from CSV.`, false);
+      }
+      rebuildFromEntries();
+      updateActiveCapitalDisplay();
+    }catch(err){
+      showImportMsg('Import failed: ' + err.message, true);
+    }
+    event.target.value = ''; // allow re-selecting the same file later
+  };
+  reader.readAsText(file);
+}
+
+function clearData(){
+  RAW = []; ENTRIES = [];
+  exchangeFilter = 'ALL';
+  document.querySelectorAll('#exchangeFilterSeg button').forEach(b=>b.classList.toggle('on', b.dataset.ex==='ALL'));
+  document.getElementById('dataInput').value='';
+  document.getElementById('entryPnl').value='';
+  document.getElementById('filterBar').style.display='none';
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('emptyState').style.display='block';
+  document.getElementById('metaBadge').textContent = 'No data loaded';
+  document.getElementById('entryTableWrap').style.display='none';
+  showError(null);
+  saveEntriesRemote();
+}
+
+document.getElementById('rangeSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  RANGE = b.dataset.r;
+  document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  render();
+});
+
+function rangeFilterRows(rows){
+  if(RANGE==='ALL' || !rows.length) return rows;
+  const last = rows[rows.length-1].date;
+  let from = new Date(last);
+  if(RANGE==='1M') from.setMonth(from.getMonth()-1);
+  if(RANGE==='3M') from.setMonth(from.getMonth()-3);
+  if(RANGE==='6M') from.setMonth(from.getMonth()-6);
+  if(RANGE==='1Y') from.setFullYear(from.getFullYear()-1);
+  if(RANGE==='YTD') from = new Date(last.getFullYear(),0,1);
+  return rows.filter(r=>r.date>=from);
+}
+
+// ---- self-contained SVG donut ----
+function renderDonutSVG(elId, data, centerLabel){
+  const el = document.getElementById(elId);
+  const total = data.reduce((s,d)=>s+d.value,0);
+  if(!total){ el.innerHTML = '<div style="color:var(--sub);font-size:12px;padding:20px;">No data</div>'; return; }
+  const r=52, cx=70, cy=70, circ=2*Math.PI*r;
+  let offset=0, arcs='';
+  data.forEach(d=>{
+    if(d.value<=0) return;
+    const frac = d.value/total, dash = frac*circ;
+    arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="18" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += dash;
+  });
+  let centerHtml = '';
+  if(centerLabel){
+    centerHtml = `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="20" font-weight="700" fill="#e7ecf7">${centerLabel.value}</text>
+      <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="9" letter-spacing="0.5" fill="#7c88a8">${centerLabel.label}</text>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 140 140" width="180" height="180">${arcs}${centerHtml}</svg>`;
+}
+
+// ---- self-contained SVG line/area chart ----
+function renderLineSVG(elId, footId, labels, series){
+  const el = document.getElementById(elId);
+  const n = labels.length;
+  if(!n){ el.innerHTML = '<div style="color:var(--sub);font-size:12px;padding:40px 0;text-align:center;">No data in this range</div>'; if(footId) document.getElementById(footId).innerHTML=''; return; }
+  const w=900, h=230, padL=8, padR=8, padT=10, padB=10;
+  const allVals = series.flatMap(s=>s.values);
+  let minV = Math.min(0,...allVals), maxV = Math.max(0,...allVals);
+  if(minV===maxV){ minV-=1; maxV+=1; }
+  const range = maxV-minV;
+  const x = i => padL + (w-padL-padR) * (n<=1?0.5:i/(n-1));
+  const y = v => padT + (h-padT-padB) * (1 - (v-minV)/range);
+  const zeroY = y(0);
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
+    <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="#232c47" stroke-width="1"/>`;
+  series.forEach(s=>{
+    const pts = s.values.map((v,i)=>[x(i),y(v)]);
+    const path = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    if(s.fillColor){
+      const area = path + ` L${pts[pts.length-1][0].toFixed(1)},${zeroY} L${pts[0][0].toFixed(1)},${zeroY} Z`;
+      svg += `<path d="${area}" fill="${s.fillColor}" stroke="none"/>`;
+    }
+    svg += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2.5"/>`;
+  });
+  svg += '</svg>';
+  el.innerHTML = svg;
+  if(footId){
+    const legend = series.map(s=>`<span style="color:${s.color};font-weight:600">● ${s.name}: ${fmtINR(s.values[s.values.length-1])}</span>`).join('&nbsp;&nbsp;&nbsp;');
+    document.getElementById(footId).innerHTML = `<span>${labels[0]}</span><span>${legend}</span><span>${labels[labels.length-1]}</span>`;
+  }
+}
+
+function renderBarSVG(elId, footId, labels, values){
+  const el = document.getElementById(elId);
+  const n = labels.length;
+  if(!n){ el.innerHTML = '<div style="color:var(--sub);font-size:12px;padding:40px 0;text-align:center;">No data in this range</div>'; if(footId) document.getElementById(footId).innerHTML=''; return; }
+  const w=900, h=230, padL=8, padR=8, padT=10, padB=18;
+  const maxAbs = Math.max(1, ...values.map(v=>Math.abs(v)));
+  const zeroY = padT + (h-padT-padB) * 0.55;
+  const usableUp = zeroY - padT, usableDown = (h-padB) - zeroY;
+  const bw = (w - padL - padR) / n;
+  let bars = `<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="#232c47" stroke-width="1"/>`;
+  values.forEach((v,i)=>{
+    const x = padL + i*bw + bw*0.15;
+    const bwi = bw*0.7;
+    if(v>=0){
+      const hh = (v/maxAbs)*usableUp;
+      bars += `<rect x="${x.toFixed(1)}" y="${(zeroY-hh).toFixed(1)}" width="${bwi.toFixed(1)}" height="${hh.toFixed(1)}" fill="#3ddc84" rx="1"/>`;
+    } else {
+      const hh = (Math.abs(v)/maxAbs)*usableDown;
+      bars += `<rect x="${x.toFixed(1)}" y="${zeroY.toFixed(1)}" width="${bwi.toFixed(1)}" height="${hh.toFixed(1)}" fill="#ff5c72" rx="1"/>`;
+    }
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">${bars}</svg>`;
+  if(footId){
+    const total = values.reduce((a,b)=>a+b,0);
+    document.getElementById(footId).innerHTML = `<span>${labels[0]}</span><span style="color:${total>=0?'#3ddc84':'#ff5c72'};font-weight:600">● Net: ${fmtINR(total)}</span><span>${labels[labels.length-1]}</span>`;
+  }
+}
+
+let equityViewMode = 'ec';
+document.getElementById('equityViewSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  equityViewMode = b.dataset.v;
+  document.querySelectorAll('#equityViewSeg button').forEach(x=>x.classList.toggle('on', x===b));
+  render();
+});
+
+function render(){
+ try{
+  const allRows = getEffectiveRows();
+  const rows = monthFilter ? allRows.filter(r=>r.date.getFullYear()===monthFilter.year && r.date.getMonth()===monthFilter.month) : allRows;
+
+  const badge = document.getElementById('monthFilterBadge');
+  if(monthFilter){
+    badge.style.display = 'flex';
+    document.getElementById('monthFilterLabel').textContent = new Date(monthFilter.year, monthFilter.month, 1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  } else {
+    badge.style.display = 'none';
+  }
+
+  if(!rows.length){
+    document.getElementById('metaBadge').textContent = monthFilter ? 'No trading days in this month' : (ENTRIES.length ? 'No trading days match this Exchange filter' : 'No data loaded');
+    document.getElementById('cNet').textContent='—';
+    document.getElementById('cCharges').textContent='—';
+    document.getElementById('cDays').textContent='0';
+    document.getElementById('cWin').textContent='—';
+    document.getElementById('cUsedCap').textContent='—';
+    document.getElementById('cRoi').textContent='—';
+    document.getElementById('cDD').textContent='—';
+    document.getElementById('cDDPct').textContent='';
+    document.getElementById('equityChart').innerHTML = '<div style="color:var(--sub);font-size:12px;padding:40px 0;text-align:center;">No data for this filter</div>';
+    document.getElementById('equityFoot').innerHTML='';
+    document.getElementById('summaryDonut').innerHTML='';
+    document.getElementById('summaryLegend').innerHTML='';
+    document.getElementById('bestMonth').textContent='—';
+    document.getElementById('worstMonth').textContent='—';
+    document.getElementById('quarterList').innerHTML='';
+    document.getElementById('weekdayList').innerHTML='';
+    document.getElementById('weekPanelBody').innerHTML='';
+    document.getElementById('capitalChart').innerHTML='';
+    document.getElementById('capAvg2').textContent='—';
+    document.getElementById('capPeak2').textContent='—';
+    document.getElementById('capMin2').textContent='—';
+    document.getElementById('avgWinLoss').textContent='—';
+    document.getElementById('riskReward').textContent='—';
+    document.getElementById('maxLossStreak').textContent='—';
+    document.getElementById('maxProfitDay').textContent='—';
+    document.getElementById('maxLossDay').textContent='—';
+    document.getElementById('costImpact').textContent='—';
+    document.getElementById('stratBody').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--sub);padding:30px;">No data for this filter</td></tr>`;
+    renderHeatmap(allRows);
+    return;
+  }
+  const totalPnl = rows.reduce((s,r)=>s+r.pnl,0);
+  const totalCharges = rows.reduce((s,r)=>s+r.charges,0);
+  const totalNet = totalPnl - totalCharges;
+  const capExchange = exchangeFilter==='MCX' ? 'MCX' : 'NFO & BFO'; // "All" and "NFO & BFO" both use the NFO & BFO capital pool
+  const capEntriesInScope = ENTRIES.filter(e=>e.exchange===capExchange && (!monthFilter || (e.date.getFullYear()===monthFilter.year && e.date.getMonth()===monthFilter.month)));
+  const usedCapital = capEntriesInScope.length ? capEntriesInScope.reduce((s,e)=>s+e.capital,0)/capEntriesInScope.length : 0;
+  const winDays = rows.filter(r=>r.net>0).length;
+  const winRatio = rows.length ? winDays/rows.length*100 : 0;
+  const roi = usedCapital ? totalNet/usedCapital*100 : 0;
+
+  // equity + drawdown
+  let cum=0, peak=-Infinity, maxDD=0, maxDDPct=0;
+  const withEquity = rows.map(r=>{
+    cum += r.net; peak = Math.max(peak, cum);
+    const dd = cum - peak;
+    if(dd < maxDD) maxDD = dd;
+    const ddPct = peak>0 ? dd/peak*100 : 0;
+    if(ddPct < maxDDPct) maxDDPct = ddPct;
+    return {...r, equity:cum, drawdown:dd};
+  });
+
+  document.getElementById('metaBadge').textContent = `${rows.length} trading days loaded · showing entered P&L as-is`;
+  const cNet = document.getElementById('cNet'); cNet.textContent = fmtINR(totalNet); cNet.className='val '+(totalNet>=0?'pos':'neg');
+  document.getElementById('cCharges').textContent = fmtINR(totalCharges);
+  document.getElementById('cDays').textContent = rows.length;
+  document.getElementById('cWin').textContent = winRatio.toFixed(0)+'%';
+  document.getElementById('cUsedCap').textContent = fmtINR(usedCapital);
+  const cRoi = document.getElementById('cRoi'); cRoi.textContent = roi.toFixed(1)+'%'; cRoi.className='val '+(roi>=0?'pos':'neg');
+  document.getElementById('cDD').textContent = fmtINR(maxDD);
+  document.getElementById('cDDPct').textContent = maxDDPct.toFixed(1)+'% from peak';
+
+  renderEquity(withEquity);
+  renderHeatmap(allRows);
+  renderMonthSummary(rows);
+  renderQuarters(rows);
+  renderWeekday(rows);
+  renderWeekPanel(rows);
+  renderCapital(rows);
+  renderRisk(rows);
+  renderTable(withEquity);
+ }catch(err){ showError('Something went wrong while rendering: ' + err.message); console.error(err); }
+}
+
+function renderEquity(withEquity){
+  const rows = rangeFilterRows(withEquity);
+  const labels = rows.map(r=>r.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
+  if(equityViewMode==='bar'){
+    renderBarSVG('equityChart','equityFoot', labels, rows.map(r=>r.net));
+    return;
+  }
+  renderLineSVG('equityChart','equityFoot', labels, [
+    {name:'Equity', color:'#3ddc84', fillColor:'rgba(61,220,132,.10)', values: rows.map(r=>r.equity)},
+    {name:'Drawdown', color:'#ff5c72', fillColor:null, values: rows.map(r=>r.drawdown)},
+  ]);
+}
+
+function renderHeatmap(rows){
+  const fyMap = new Map();
+  rows.forEach(d=>{
+    const fy = fyLabel(d.date), mi = fyMonthIndex(d.date);
+    if(!fyMap.has(fy)) fyMap.set(fy, Array(12).fill(null));
+    const arr = fyMap.get(fy);
+    arr[mi] = (arr[mi]||0) + d.net;
+  });
+  window._heatFyMap = fyMap;
+  window._heatRows = rows;
+  window._heatFYs = [...fyMap.keys()].sort().reverse();
+  // keep current drill-down state valid if data changed
+  if(heatState.fyIdx >= window._heatFYs.length) heatState = {level:'year', fyIdx:0, monthIdx:0};
+  drawHeat();
+}
+
+function heatColor(v, scale){
+  const pos = v>=0;
+  const alpha = Math.min(.85, .28 + Math.abs(v)/scale);
+  return pos ? `rgba(61,220,132,${alpha})` : `rgba(255,92,114,${alpha})`;
+}
+
+function calDateFromHeatState(){
+  const fys = window._heatFYs;
+  if(!fys || heatState.level!=='day') return null;
+  const fy = fys[heatState.fyIdx];
+  if(!fy) return null;
+  const startYear = 2000 + parseInt(fy.match(/\d+/g)[0]);
+  const mi = heatState.monthIdx;
+  const calMonth = (mi+3)%12;
+  const calYear = mi<=8 ? startYear : startYear+1;
+  return {year: calYear, month: calMonth};
+}
+
+function clearMonthFilter(){ monthFilter = null; render(); }
+
+function heatGoYears(){ heatState = {level:'year', fyIdx:0, monthIdx:0}; monthFilter = null; render(); }
+function heatGoMonths(i){ heatState = {level:'month', fyIdx:i, monthIdx:0}; monthFilter = null; render(); }
+function heatGoDays(mi){ heatState = {level:'day', fyIdx:heatState.fyIdx, monthIdx:mi}; monthFilter = calDateFromHeatState(); render(); }
+
+function heatSetLevel(lvl){
+  const fys = window._heatFYs;
+  if(!fys || !fys.length) return;
+  if(lvl==='year'){ heatGoYears(); return; }
+  if(lvl==='month'){ heatGoMonths(heatState.level==='year' ? 0 : heatState.fyIdx); return; }
+  if(lvl==='day'){
+    const fyIdx = heatState.level==='year' ? 0 : heatState.fyIdx;
+    const arr = window._heatFyMap.get(fys[fyIdx]);
+    let mi = 0;
+    for(let i=11;i>=0;i--){ if(arr[i]!==null){ mi = i; break; } }
+    heatState = {level:'day', fyIdx, monthIdx:mi};
+    monthFilter = calDateFromHeatState();
+    render();
+  }
+}
+
+function heatDayShiftMonth(delta){
+  const fys = window._heatFYs;
+  let mi = heatState.monthIdx + delta, fyIdx = heatState.fyIdx;
+  while(mi > 11){ mi -= 12; fyIdx -= 1; }
+  while(mi < 0){ mi += 12; fyIdx += 1; }
+  fyIdx = Math.max(0, Math.min(fys.length-1, fyIdx));
+  heatState = {level:'day', fyIdx, monthIdx:mi};
+  monthFilter = calDateFromHeatState();
+  render();
+}
+
+document.getElementById('heatTabs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  heatSetLevel(b.dataset.lvl);
+});
+
+function syncHeatTabs(){
+  document.querySelectorAll('#heatTabs button').forEach(b=>b.classList.toggle('on', b.dataset.lvl===heatState.level));
+}
+
+function drawHeat(){
+  const fyMap = window._heatFyMap, rows = window._heatRows, fys = window._heatFYs;
+  const el = document.getElementById('heatContainer');
+  syncHeatTabs();
+  if(!fys || !fys.length){ el.innerHTML = '<div style="color:var(--sub);font-size:12px;">No data</div>'; return; }
+
+  if(heatState.level==='year'){
+    const totals = fys.map(fy => fyMap.get(fy).reduce((s,v)=>s+(v||0),0));
+    const max = Math.max(1,...totals.map(v=>Math.abs(v)));
+    const rowsHtml = fys.map((fy,i)=>`
+      <div class="qrow" style="cursor:pointer" onclick="heatGoMonths(${i})">
+        <div class="name" style="width:90px;color:var(--text);font-weight:600;">${fy}</div>
+        <div class="barwrap"><div class="barfill" style="width:${Math.abs(totals[i])/max*100}%;background:${totals[i]>=0?'#3ddc84':'#ff5c72'}"></div></div>
+        <div class="amt" style="color:${totals[i]>=0?'#3ddc84':'#ff5c72'}">${fmtINR(totals[i])}</div>
+      </div>`).join('');
+    el.innerHTML = `<div style="font-size:11px;color:var(--sub);margin-bottom:8px;">Click a year to see month-wise P&L</div>${rowsHtml}`;
+    return;
+  }
+
+  if(heatState.level==='month'){
+    const fy = fys[heatState.fyIdx];
+    const arr = fyMap.get(fy);
+    const cells = FY_MONTHS.map((m,mi)=>{
+      const v = arr[mi];
+      if(v===null) return `<td><span class="heat-empty">—</span></td>`;
+      return `<td><span class="heat-cell" style="background:${heatColor(v,50000)};color:#eafff5;cursor:pointer" onclick="heatGoDays(${mi})">${fmtINR(v,true)}</span></td>`;
+    }).join('');
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <button class="act btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="heatGoYears()">← All Years</button>
+        <b>${fy}</b>
+      </div>
+      <table class="heat-table"><thead><tr><th></th>${FY_MONTHS.map(m=>`<th>${m}</th>`).join('')}</tr></thead>
+      <tbody><tr><td></td>${cells}</tr></tbody></table>
+      <div style="font-size:11px;color:var(--sub);margin-top:8px;">Click a month to see day-wise P&L</div>`;
+    return;
+  }
+
+  if(heatState.level==='day'){
+    const fy = fys[heatState.fyIdx];
+    const startYear = 2000 + parseInt(fy.match(/\d+/g)[0]);
+    const mi = heatState.monthIdx;
+    const calMonth = (mi+3)%12;
+    const calYear = mi<=8 ? startYear : startYear+1;
+    const dayMap = new Map();
+    rows.forEach(r=>{ if(r.date.getFullYear()===calYear && r.date.getMonth()===calMonth) dayMap.set(r.date.getDate(), (dayMap.get(r.date.getDate())||0)+r.net); });
+    const firstDow = new Date(calYear,calMonth,1).getDay();
+    const daysInMonth = new Date(calYear,calMonth+1,0).getDate();
+    const vals = [...dayMap.values()];
+    const scale = Math.max(5000, ...vals.map(v=>Math.abs(v)));
+
+    let cellsHtml = '';
+    for(let i=0;i<firstDow;i++) cellsHtml += '<td></td>';
+    let col = firstDow;
+    for(let day=1;day<=daysInMonth;day++){
+      const v = dayMap.has(day) ? dayMap.get(day) : null;
+      if(v===null) cellsHtml += `<td style="color:#3a4266;font-size:10px;padding:8px 2px;">${day}</td>`;
+      else cellsHtml += `<td><div class="heat-cell" style="background:${heatColor(v,scale)};color:#eafff5;padding:5px 2px;line-height:1.3;">
+        <div style="font-size:9px;opacity:.75">${day}</div>${fmtINR(v,true)}</div></td>`;
+      col++;
+      if(col%7===0 && day<daysInMonth) cellsHtml += '</tr><tr>';
+    }
+    const monthLabel = new Date(calYear,calMonth,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <button class="act btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="heatGoMonths(${heatState.fyIdx})">← ${fy} Months</button>
+        <button class="act btn-ghost" style="padding:5px 9px;font-size:12px;" onclick="heatDayShiftMonth(-1)">‹</button>
+        <b>${monthLabel}</b>
+        <button class="act btn-ghost" style="padding:5px 9px;font-size:12px;" onclick="heatDayShiftMonth(1)">›</button>
+      </div>
+      <table class="heat-table"><thead><tr>${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<th>${d}</th>`).join('')}</tr></thead>
+      <tbody><tr>${cellsHtml}</tr></tbody></table>`;
+    return;
+  }
+}
+
+function renderMonthSummary(rows){
+  if(monthFilter){
+    // Day-level summary for the selected month (matches reference: P&L Summary (Days))
+    document.getElementById('summaryTitle').textContent = 'P&L Summary (Days)';
+    document.getElementById('bestLbl').textContent = 'Best Day';
+    document.getElementById('worstLbl').textContent = 'Worst Day';
+    const profitable = rows.filter(r=>r.net>0).length;
+    const losing = rows.filter(r=>r.net<0).length;
+    const flat = rows.filter(r=>r.net===0).length;
+    const total = rows.length || 1;
+
+    renderDonutSVG('summaryDonut', [
+      {label:'Profitable', value:profitable, color:'#3ddc84'},
+      {label:'Losing', value:losing, color:'#ff5c72'},
+      {label:'Break-even', value:flat, color:'#5a6a8f'},
+    ], {value: rows.length, label: 'TRADING DAYS'});
+    document.getElementById('summaryLegend').innerHTML = `
+      <div class="li"><span class="k"><span class="dot2" style="background:#3ddc84"></span>Profitable</span><span>${profitable} / ${total}</span></div>
+      <div class="li"><span class="k"><span class="dot2" style="background:#ff5c72"></span>Losing</span><span>${losing} / ${total}</span></div>
+      <div class="li"><span class="k"><span class="dot2" style="background:#5a6a8f"></span>Break-even</span><span>${flat} / ${total}</span></div>`;
+
+    let best=null, worst=null;
+    rows.forEach(r=>{
+      const label = r.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+      if(!best || r.net>best.v) best={label, v:r.net};
+      if(!worst || r.net<worst.v) worst={label, v:r.net};
+    });
+    document.getElementById('bestMonth').innerHTML = best ? `${best.label}<br><span style="font-size:12px">${fmtINR(best.v)}</span>` : '—';
+    document.getElementById('worstMonth').innerHTML = worst ? `${worst.label}<br><span style="font-size:12px">${fmtINR(worst.v)}</span>` : '—';
+    return;
+  }
+
+  document.getElementById('summaryTitle').textContent = 'P&L Summary (Months)';
+  document.getElementById('bestLbl').textContent = 'Best Month';
+  document.getElementById('worstLbl').textContent = 'Worst Month';
+  const monthMap = new Map();
+  rows.forEach(d=>{ const key = d.date.getFullYear()+'-'+d.date.getMonth(); monthMap.set(key, (monthMap.get(key)||0) + d.net); });
+  const vals = [...monthMap.entries()];
+  const profitable = vals.filter(v=>v[1]>0).length;
+  const losing = vals.filter(v=>v[1]<0).length;
+  const flat = vals.filter(v=>v[1]===0).length;
+  const total = vals.length || 1;
+
+  renderDonutSVG('summaryDonut', [
+    {label:'Profitable', value:profitable, color:'#3ddc84'},
+    {label:'Losing', value:losing, color:'#ff5c72'},
+    {label:'Break-even', value:flat, color:'#5a6a8f'},
+  ]);
+  document.getElementById('summaryLegend').innerHTML = `
+    <div class="li"><span class="k"><span class="dot2" style="background:#3ddc84"></span>Profitable</span><span>${profitable} / ${total}</span></div>
+    <div class="li"><span class="k"><span class="dot2" style="background:#ff5c72"></span>Losing</span><span>${losing} / ${total}</span></div>
+    <div class="li"><span class="k"><span class="dot2" style="background:#5a6a8f"></span>Break-even</span><span>${flat} / ${total}</span></div>`;
+
+  let best=null, worst=null;
+  vals.forEach(([k,v])=>{
+    const [y,m]=k.split('-').map(Number);
+    const label = new Date(y,m,1).toLocaleDateString('en-IN',{month:'short',year:'numeric'});
+    if(!best || v>best.v) best={label,v};
+    if(!worst || v<worst.v) worst={label,v};
+  });
+  document.getElementById('bestMonth').innerHTML = best ? `${best.label}<br><span style="font-size:12px">${fmtINR(best.v)}</span>` : '—';
+  document.getElementById('worstMonth').innerHTML = worst ? `${worst.label}<br><span style="font-size:12px">${fmtINR(worst.v)}</span>` : '—';
+}
+
+function renderQuarters(rows){
+  const q = [0,0,0,0];
+  const years = [...new Set(rows.map(d=>d.date.getFullYear()))];
+  const yr = years.sort().reverse()[0];
+  rows.filter(d=>d.date.getFullYear()===yr).forEach(d=>{ q[Math.floor(d.date.getMonth()/3)]+=d.net; });
+  const labels = ['Q1 (Jan-Mar)','Q2 (Apr-Jun)','Q3 (Jul-Sep)','Q4 (Oct-Dec)'];
+  const max = Math.max(1,...q.map(v=>Math.abs(v)));
+  document.getElementById('quarterList').innerHTML = q.map((v,i)=>`
+    <div class="qrow"><div class="name">${labels[i]}</div>
+      <div class="barwrap"><div class="barfill" style="width:${Math.abs(v)/max*100}%;background:${v>=0?'#3ddc84':'#ff5c72'}"></div></div>
+      <div class="amt" style="color:${v>=0?'#3ddc84':'#ff5c72'}">${fmtINR(v)}</div>
+    </div>`).join('');
+}
+
+function renderWeekPanel(rows){
+  const el = document.getElementById('weekPanelBody');
+  if(!monthFilter){
+    el.innerHTML = '<div style="color:var(--sub);font-size:11.5px;padding:10px 0;">Select a month from the heatmap to see its week-wise breakdown.</div>';
+    return;
+  }
+  const daysInMonth = new Date(monthFilter.year, monthFilter.month+1, 0).getDate();
+  const dayMap = new Map();
+  rows.forEach(r=>dayMap.set(r.date.getDate(), (dayMap.get(r.date.getDate())||0) + r.net));
+  const weekMap = new Map();
+  for(let day=1; day<=daysInMonth; day++){
+    const v = dayMap.has(day) ? dayMap.get(day) : 0;
+    const wk = Math.floor((day-1)/7);
+    weekMap.set(wk, (weekMap.get(wk)||0) + v);
+  }
+  const weekMax = Math.max(1, ...[...weekMap.values()].map(v=>Math.abs(v)));
+  el.innerHTML = [...weekMap.entries()].map(([wk,v])=>{
+    const from = wk*7+1, to = Math.min((wk+1)*7, daysInMonth);
+    return `<div class="qrow"><div class="name" style="width:80px;">Week ${wk+1} (${from}-${to})</div>
+      <div class="barwrap"><div class="barfill" style="width:${Math.abs(v)/weekMax*100}%;background:${v>=0?'#3ddc84':'#ff5c72'}"></div></div>
+      <div class="amt" style="color:${v>=0?'#3ddc84':'#ff5c72'}">${fmtINR(v)}</div></div>`;
+  }).join('');
+}
+
+function renderWeekday(rows){
+  const names=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const sums = Array(7).fill(0);
+  rows.forEach(d=>{ sums[d.date.getDay()] += d.net; });
+  const order = [1,2,3,4,5];
+  const totalAbs = order.reduce((s,i)=>s+Math.abs(sums[i]),0)||1;
+  const max = Math.max(1,...order.map(i=>Math.abs(sums[i])));
+  document.getElementById('weekdayList').innerHTML = order.map(i=>`
+    <div class="wrow"><div class="name">${names[i]}</div>
+      <div class="barwrap"><div class="barfill" style="width:${Math.abs(sums[i])/max*100}%;background:${sums[i]>=0?'#3ddc84':'#ff5c72'}"></div></div>
+      <div class="amt" style="color:${sums[i]>=0?'#3ddc84':'#ff5c72'}">${fmtINR(sums[i])} <span style="color:var(--sub);font-weight:400">${(Math.abs(sums[i])/totalAbs*100).toFixed(0)}%</span></div>
+    </div>`).join('');
+}
+
+function renderCapital(rows){
+  const shown = rangeFilterRows(rows);
+  const labels = shown.map(r=>r.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
+  renderLineSVG('capitalChart', null, labels, [
+    {name:'Capital Used', color:'#5aa9ff', fillColor:'rgba(90,169,255,.10)', values: shown.map(r=>r.capital)},
+  ]);
+  const avgCap = rows.reduce((s,r)=>s+r.capital,0)/rows.length;
+  document.getElementById('capAvg2').textContent = fmtINR(avgCap);
+  document.getElementById('capPeak2').textContent = fmtINR(Math.max(...rows.map(r=>r.capital)));
+  document.getElementById('capMin2').textContent = fmtINR(Math.min(...rows.map(r=>r.capital)));
+}
+
+function renderRisk(rows){
+  const wins = rows.filter(r=>r.net>0).map(r=>r.net);
+  const losses = rows.filter(r=>r.net<0).map(r=>Math.abs(r.net));
+  const avgWin = wins.length ? wins.reduce((a,b)=>a+b,0)/wins.length : 0;
+  const avgLoss = losses.length ? losses.reduce((a,b)=>a+b,0)/losses.length : 0;
+  document.getElementById('avgWinLoss').innerHTML = `<span style="color:var(--green)">${fmtINR(avgWin)}</span> / <span style="color:var(--red)">${fmtINR(avgLoss)}</span>`;
+  document.getElementById('riskReward').textContent = avgLoss ? '1 : ' + (avgWin/avgLoss).toFixed(2) : '—';
+
+  let streak=0, maxStreak=0;
+  rows.forEach(r=>{ if(r.net<0){ streak++; maxStreak=Math.max(maxStreak,streak); } else streak=0; });
+  document.getElementById('maxLossStreak').textContent = maxStreak + ' days';
+
+  const best = rows.reduce((a,b)=> b.net>a.net ? b : a, rows[0]);
+  const worst = rows.reduce((a,b)=> b.net<a.net ? b : a, rows[0]);
+  document.getElementById('maxProfitDay').innerHTML = `${fmtINR(best.net)}<br><span style="font-size:11px;color:var(--sub)">${best.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>`;
+  document.getElementById('maxLossDay').innerHTML = `${fmtINR(worst.net)}<br><span style="font-size:11px;color:var(--sub)">${worst.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>`;
+
+  const totalPnl = rows.reduce((s,r)=>s+r.pnl,0);
+  const totalCharges = rows.reduce((s,r)=>s+r.charges,0);
+  document.getElementById('costImpact').textContent = totalCharges>0 ? (totalCharges/Math.abs(totalPnl||1)*100).toFixed(1)+'% of P&L' : 'No charges data';
+}
+
+function sortBy(key){
+  if(SORT.key===key) SORT.dir *= -1; else { SORT.key=key; SORT.dir = -1; }
+  render();
+}
+
+function renderTable(withEquity){
+  let list = [...withEquity];
+  list.sort((a,b)=>{
+    const k=SORT.key;
+    if(k==='date') return (a.date-b.date)*SORT.dir;
+    return (a[k]-b[k])*SORT.dir;
+  });
+  document.getElementById('stratBody').innerHTML = list.map(r=>{
+    const roi = r.capital ? (r.net/r.capital*100) : 0;
+    return `<tr>
+      <td>${r.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td>${fmtINR(r.capital)}</td>
+      <td style="color:${r.pnl>=0?'#3ddc84':'#ff5c72'}">${fmtINR(r.pnl)}</td>
+      <td style="color:${r.net>=0?'#3ddc84':'#ff5c72'};font-weight:700">${fmtINR(r.net)}</td>
+      <td>${roi.toFixed(2)}%</td>
+      <td style="color:${r.equity>=0?'#3ddc84':'#ff5c72'}">${fmtINR(r.equity)}</td>
+      <td style="color:var(--red)">${fmtINR(r.drawdown)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--sub);padding:30px;">No data</td></tr>`;
+}
+
+function loadSample(){
+  const start = new Date(2026,3,1);
+  let lines = ['Date,Capital,P&L,Charges,Exchange'];
+  let capitalMcx = 300000, capitalNfo = 400000;
+  for(let d=0; d<130; d++){
+    const day = new Date(start); day.setDate(day.getDate()+d);
+    if(day.getDay()===0 || day.getDay()===6) continue;
+    const ds = ('0'+day.getDate()).slice(-2)+'-'+('0'+(day.getMonth()+1)).slice(-2)+'-'+day.getFullYear();
+    capitalNfo = Math.max(200000, capitalNfo + Math.round((Math.random()-0.45)*15000));
+    const pnlN = Math.round((Math.random()*2-0.85) * capitalNfo * 0.02);
+    const chargesN = Math.round(Math.abs(pnlN)*0.08) + Math.round(capitalNfo*0.0006);
+    lines.push([ds,capitalNfo,pnlN,chargesN,'NFO & BFO'].join(','));
+    if(Math.random() < 0.6){
+      capitalMcx = Math.max(150000, capitalMcx + Math.round((Math.random()-0.45)*10000));
+      const pnlM = Math.round((Math.random()*2-0.85) * capitalMcx * 0.02);
+      const chargesM = Math.round(Math.abs(pnlM)*0.08) + Math.round(capitalMcx*0.0006);
+      lines.push([ds,capitalMcx,pnlM,chargesM,'MCX'].join(','));
+    }
+  }
+  document.getElementById('dataInput').value = lines.join('\n');
+  loadData();
+}
+
+// init: mode, cloud data, live polling for cross-device sync
+async function initApp(){
+  applyMode();
+  const el = document.getElementById('entryDate');
+  if(el) setEntryDate(new Date());
+  loadFromLocal();
+  lastSavedSignature = serializeEntries();
+  updateActiveCapitalDisplay();
+  rebuildFromEntries();
+  setSyncBadge('Syncing…');
+  await loadFromRemote(false);
+  lastSavedSignature = serializeEntries();
+  rebuildFromEntries();
+  setInterval(()=>{ loadFromRemote(true); }, 8000);
+}
+initApp();
+
+/* ================= INTRADAY REPORT ================= */
+const IDR_NAME = {'MCX':'MCX', 'NFO & BFO':'NSE/BSE'};
+const IDR_CLOSE = {'MCX':'Intraday Close · 11:30 PM', 'NSE/BSE':'Intraday Close · 3:30 PM', 'COMBINED':'All segments'};
+
+function idrInr(n){ const neg = n < 0; n = Math.abs(n); return (neg?'-':'') + '₹' + Math.round(n).toLocaleString('en-IN'); }
+function idrPct(p, c){ const v = c ? (p/c)*100 : 0; return (v>=0?'+':'') + v.toFixed(2) + '%'; }
+function idrCls(n){ return n >= 0 ? 'idr-pos' : 'idr-neg'; }
+function idrDateStr(d){ return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}).replace(/-/g,' '); }
+
+function idrNet(e){
+  return e.pnl; // show exactly what was entered — no auto-charge deduction
+}
+
+function idrAvgCap(list){
+  return list.length ? list.reduce((s,e)=>s+e.capital,0)/list.length : 0;
+}
+
+function idrCompute(list){
+  list = list.slice().sort((a,b)=>a.date-b.date);
+  const last = list[list.length-1];
+  const ld = last.date, lm = ld.getMonth(), lyr = ld.getFullYear();
+  const lastKey = isoOfDate(ld);
+  const totalNet = list.reduce((s,e)=>s+idrNet(e),0);
+  const intradayList = list.filter(e=>isoOfDate(e.date)===lastKey);
+  const monthList = list.filter(e=>e.date.getMonth()===lm && e.date.getFullYear()===lyr);
+  // Each period's ROI% is computed on the AVERAGE capital actually deployed during
+  // that specific period (time-weighted), not on a single fixed capital figure —
+  // so if capital was added/changed mid-month, current-month % reflects that.
+  return {
+    date: ld,
+    intraday: intradayList.reduce((s,e)=>s+idrNet(e),0),
+    intradayCap: idrAvgCap(intradayList),
+    month: monthList.reduce((s,e)=>s+idrNet(e),0),
+    monthCap: idrAvgCap(monthList),
+    ytd: totalNet,
+    ytdCap: idrAvgCap(list),
+    till: totalNet,
+    tillCap: idrAvgCap(list),
+    capital: last.capital // latest day's capital — shown as "Capital Deployed" reference figure only
+  };
+}
+
+function idrTile(label, value, sub, bg, cl){
+  return '<div class="idr-tile" style="background:'+bg+'"><div class="lb">'+label+'</div>'+
+    '<div class="vl '+cl+'">'+value+'</div>'+ (sub ? '<div class="sb '+cl+'">'+sub+'</div>' : '') + '</div>';
+}
+function idrCell(v, c){
+  return '<div class="cell"><div class="bg '+idrCls(v)+'">'+idrInr(v)+'</div>'+
+    '<div class="sm '+idrCls(v)+'">'+idrPct(v,c)+'</div></div>';
+}
+
+function idrCardHtml(name, d){
+  const cap = d.capital; // "Capital Deployed" tile + Investment column: latest committed capital
+  return '<div class="idr-card" data-idr="'+name+'">'+
+    '<div class="idr-head">'+
+      '<div><h1>'+name+'</h1><div class="sub">Portfolio Summary</div></div>'+
+      '<div class="idr-meta"><div class="tag">INTRADAY REPORT</div>'+
+        '<div class="dt">'+idrDateStr(d.date)+'</div>'+
+        '<div class="tm">'+(IDR_CLOSE[name]||'Intraday Close')+'</div></div>'+
+    '</div>'+
+    '<div class="idr-tiles">'+
+      idrTile('Intraday PNL', idrInr(d.intraday), idrPct(d.intraday,d.intradayCap)+' ROI', d.intraday>=0?'#e4f5e9':'#fde8ec', idrCls(d.intraday))+
+      idrTile('Current Month PNL', idrInr(d.month), idrPct(d.month,d.monthCap)+' ROI', '#e6eaf8', idrCls(d.month))+
+      idrTile('YTD PNL', idrInr(d.ytd), idrPct(d.ytd,d.ytdCap)+' YTD', '#faf3d4', idrCls(d.ytd))+
+      idrTile('Capital Deployed', idrInr(cap), '', '#e3f0e7', 'idr-ink')+
+    '</div>'+
+    '<div class="idr-thead"><div>Segment</div><div>Intraday PNL</div><div>Current Month</div>'+
+      '<div>YTD</div><div>Till Date</div><div>Investment</div></div>'+
+    '<div class="idr-row"><div class="seg">'+name+'</div>'+
+      idrCell(d.intraday,d.intradayCap)+idrCell(d.month,d.monthCap)+idrCell(d.ytd,d.ytdCap)+idrCell(d.till,d.tillCap)+
+      '<div class="cell cap"><div class="bg">'+idrInr(cap)+'</div><div class="sm">'+idrInr(cap)+' capital</div></div>'+
+    '</div>'+
+    '<div class="idr-foot"><div class="br">DINARA ALGOS</div>'+
+      '<div class="nt">Figures as entered, no charges deducted · ROI% per period on that period\'s avg. capital · EOD report may vary after final settlement</div></div>'+
+  '</div>';
+}
+
+function openIntradayReport(){
+  if(!ENTRIES.length){ alert('Pehle entries load karo — abhi koi data nahi hai.'); return; }
+  const groups = {};
+  ENTRIES.forEach(e=>{
+    const name = IDR_NAME[e.exchange] || e.exchange;
+    (groups[name] = groups[name] || []).push(e);
+  });
+  const names = Object.keys(groups);
+  const html = [];
+  const data = {};
+  names.forEach(n=>{ data[n] = idrCompute(groups[n]); html.push(idrCardHtml(n, data[n])); });
+  if(names.length > 1){
+    const comb = {date:new Date(0), intraday:0, intradayCap:0, month:0, monthCap:0, ytd:0, ytdCap:0, till:0, tillCap:0, capital:0};
+    names.forEach(n=>{ const d = data[n];
+      comb.intraday += d.intraday; comb.intradayCap += d.intradayCap;
+      comb.month += d.month; comb.monthCap += d.monthCap;
+      comb.ytd += d.ytd; comb.ytdCap += d.ytdCap;
+      comb.till += d.till; comb.tillCap += d.tillCap;
+      comb.capital += d.capital;
+      if(d.date > comb.date) comb.date = d.date;
+    });
+    html.push(idrCardHtml('COMBINED', comb));
+  }
+  document.getElementById('idrCards').innerHTML = html.join('');
+  document.getElementById('idrOverlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeIntradayReport(){
+  document.getElementById('idrOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeIntradayReport(); });
+
+function idrLoadH2C(){
+  return new Promise((res, rej)=>{
+    if(window.html2canvas) return res();
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = res; s.onerror = ()=>rej(new Error('html2canvas load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+async function idrDownloadAll(){
+  try{
+    await idrLoadH2C();
+    const cards = document.querySelectorAll('.idr-card');
+    for(const el of cards){
+      const name = el.getAttribute('data-idr') || 'report';
+      const canvas = await html2canvas(el, {scale:2, backgroundColor:null});
+      const a = document.createElement('a');
+      a.download = name.replace(/[^a-z0-9]/gi,'-') + '-intraday-' + todayStamp() + '.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      await new Promise(r=>setTimeout(r, 400));
+    }
+  }catch(err){ alert('PNG download failed: ' + err.message); }
+}
+/* ================= /INTRADAY REPORT ================= */
+
+
+/* ================= PNL MESSAGE GENERATOR (Team View) ================= */
+let finalMessage = "";
+let pmDraggedEl = null;
+
+function pmInitDragDrop(){
+  const container = document.getElementById('dragContainer');
+  if(!container) return;
+  container.querySelectorAll('.field-block').forEach(block=>{
+    block.addEventListener('dragstart', ()=>{ pmDraggedEl = block; setTimeout(()=>block.classList.add('dragging'),0); });
+    block.addEventListener('dragend', ()=>{ block.classList.remove('dragging'); saveFieldOrder(); });
+    block.addEventListener('dragover', e=>{
+      e.preventDefault();
+      const afterEl = pmGetDragAfter(container, e.clientY);
+      if(pmDraggedEl){
+        if(afterEl == null) container.insertBefore(pmDraggedEl, container.querySelector('.auto-field'));
+        else container.insertBefore(pmDraggedEl, afterEl);
+      }
+    });
+  });
+}
+function pmGetDragAfter(container, y){
+  const els = [...container.querySelectorAll('.field-block:not(.dragging)')];
+  return els.reduce((closest, child)=>{
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height/2;
+    if(offset < 0 && offset > closest.offset) return {offset, element:child};
+    return closest;
+  }, {offset:-Infinity}).element;
+}
+function saveFieldOrder(){
+  const order = [...document.querySelectorAll('#dragContainer .field-block')].map(b=>b.dataset.field);
+  try{ localStorage.setItem('dinara_field_order', JSON.stringify(order)); }catch(e){}
+}
+function loadFieldOrder(){
+  try{
+    const saved = localStorage.getItem('dinara_field_order');
+    if(!saved) return;
+    const order = JSON.parse(saved);
+    const container = document.getElementById('dragContainer');
+    const autoField = container.querySelector('.auto-field');
+    order.forEach(key=>{
+      const el = container.querySelector('.field-block[data-field="'+key+'"]');
+      if(el) container.insertBefore(el, autoField);
+    });
+  }catch(e){}
+}
+
+function saveTelegramConfig(){
+  try{
+    localStorage.setItem('dinara_bot_token', document.getElementById('botToken').value);
+    localStorage.setItem('dinara_chat_id', document.getElementById('chatId').value);
+    localStorage.setItem('dinara_auto_send', document.getElementById('autoSend').checked);
+  }catch(e){}
+}
+function loadTelegramConfig(){
+  try{
+    const token = localStorage.getItem('dinara_bot_token');
+    const chatId = localStorage.getItem('dinara_chat_id');
+    const autoSend = localStorage.getItem('dinara_auto_send');
+    if(token) document.getElementById('botToken').value = token;
+    if(chatId) document.getElementById('chatId').value = chatId;
+    if(autoSend === 'true') document.getElementById('autoSend').checked = true;
+  }catch(e){}
+}
+
+function sendToTelegram(){
+  const status = document.getElementById('telegramStatus');
+  const token = document.getElementById('botToken').value.trim();
+  const chatId = document.getElementById('chatId').value.trim();
+  if(!token || !chatId){ status.textContent = "Pehle Bot Token aur Chat ID daalo."; status.style.color = "#f87171"; return; }
+  if(!finalMessage){ status.textContent = "Pehle Generate Message dabao."; status.style.color = "#f87171"; return; }
+  status.textContent = "Bhej raha hoon..."; status.style.color = "#9aa4b2";
+  fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text: finalMessage })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.ok){ status.textContent = "✅ Telegram pe bhej diya!"; status.style.color = "#4ade80"; }
+    else { status.textContent = "❌ Fail: " + (data.description || "unknown error"); status.style.color = "#f87171"; }
+  })
+  .catch(err=>{ status.textContent = "❌ Network error: " + err.message; status.style.color = "#f87171"; });
+}
+
+function saveUsedCapital(){
+  try{ localStorage.setItem('dinara_used_capital', document.getElementById('usedCapital').value); }catch(e){}
+}
+function loadUsedCapital(){
+  try{
+    const saved = localStorage.getItem('dinara_used_capital');
+    if(saved !== null){ document.getElementById('usedCapital').value = saved; }
+    else { document.getElementById('usedCapital').value = 5400000; localStorage.setItem('dinara_used_capital', 5400000); }
+  }catch(e){}
+}
+
+function updateLiveClock(){
+  const el = document.getElementById('liveClock');
+  if(!el) return;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true});
+  el.value = dateStr + ', ' + timeStr;
+}
+
+function pmFormatINR(num){
+  const isNegative = num < 0; num = Math.abs(num);
+  let parts = num.toFixed(2).split(".");
+  let intPart = parts[0], decPart = parts[1];
+  let lastThree = intPart.substring(intPart.length - 3);
+  let otherNumbers = intPart.substring(0, intPart.length - 3);
+  if(otherNumbers !== "") lastThree = "," + lastThree;
+  const formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + "." + decPart;
+  return (isNegative ? "-" : "") + formatted;
+}
+
+function generateMessage(){
+  const pnl = parseFloat(document.getElementById('pnl').value) || 0;
+  const openPos = document.getElementById('openPos').value || "0";
+  const usedCapital = parseFloat(document.getElementById('usedCapital').value) || 0;
+  const pnlPct = usedCapital > 0 ? (pnl / usedCapital) * 100 : 0;
+  const pnlPctRounded = pnlPct.toFixed(2);
+  document.getElementById('pnlPctDisplay').value = pnlPctRounded + "%";
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
+  const minutesNow = now.getHours()*60 + now.getMinutes();
+  const marketLabel = minutesNow >= (15*60 + 45) ? "MCX" : "NSE/BSE";
+
+  const isProfit = pnl >= 0;
+  const circle = isProfit ? "\u{1F7E2}" : "\u{1F534}";
+  const sign = isProfit ? "+" : "";
+
+  const lineMap = {
+    pnl: circle + " TODAY: \u20B9" + pmFormatINR(pnl) + " (" + sign + pnlPctRounded + "%)",
+    usedCapital: "\u{1F4B0} USED CAPITAL: \u20B9" + pmFormatINR(usedCapital),
+    openPos: "\u{1F4CC} OPEN POSITIONS: " + openPos
+  };
+  const order = [...document.querySelectorAll('#dragContainer .field-block')].map(b=>b.dataset.field);
+  const orderedLines = order.map(key=>lineMap[key]).join("\n");
+
+  finalMessage = "DINARAALGO\nPnL Update \u2014 " + marketLabel + "\n\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\n" + orderedLines + "\n\n" + dateStr + ", " + timeStr + " IST";
+  document.getElementById('pmOutput').value = finalMessage;
+
+  if(document.getElementById('autoSend').checked) sendToTelegram();
+}
+
+function copyMessage(){
+  const status = document.getElementById('copyStatus');
+  if(!finalMessage){ status.textContent = "Pehle Generate Message dabao"; status.style.color = "#f87171"; return; }
+  const output = document.getElementById('pmOutput');
+  output.focus(); output.select(); output.setSelectionRange(0, finalMessage.length);
+  let copied = false;
+  try{ copied = document.execCommand('copy'); }catch(err){ copied = false; }
+  if(copied){ status.textContent = "\u2705 Copy ho gaya! Ab Telegram me paste kar do."; status.style.color = "#4ade80"; }
+  else if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(finalMessage).then(()=>{
+      status.textContent = "\u2705 Copy ho gaya! Ab Telegram me paste kar do."; status.style.color = "#4ade80";
+    }).catch(()=>{ status.textContent = "Auto-copy nahi hua. Box pe click karke Ctrl+A phir Ctrl+C dabao."; status.style.color = "#f87171"; });
+  } else { status.textContent = "Auto-copy nahi hua. Box pe click karke Ctrl+A phir Ctrl+C dabao."; status.style.color = "#f87171"; }
+}
+
+loadFieldOrder();
+pmInitDragDrop();
+loadTelegramConfig();
+loadUsedCapital();
+updateLiveClock();
+setInterval(updateLiveClock, 1000);
+/* ================= /PNL MESSAGE GENERATOR ================= */
+
+</script>
+</body>
+</html>
