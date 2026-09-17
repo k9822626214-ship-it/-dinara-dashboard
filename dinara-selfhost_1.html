@@ -29,6 +29,9 @@
   .brand h1{font-size:20px;margin:0;letter-spacing:.3px;font-weight:700;}
   .brand small{color:var(--sub);font-weight:400;margin-left:6px;font-size:12px;}
   .meta-badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--sub);white-space:nowrap;}
+  /* Sync fail hone par badge red/highlighted dikhe — warna user ko pata hi nahi chalta ki koi din server tak pahuncha nahi */
+  .meta-badge.sync-warn{background:rgba(255,92,114,0.15);border-color:var(--red);color:var(--red);font-weight:600;animation:syncPulse 1.6s ease-in-out infinite;}
+  @keyframes syncPulse{0%,100%{opacity:1;}50%{opacity:0.55;}}
 
   .input-panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px;}
   .input-panel .row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
@@ -658,8 +661,14 @@ let rangeViewDate = new Date();
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNKJAbwTw6eDJ8yggXhQPyawPKVgdgHGj9_qmqG8w62wXetG2JuYMTY2518GDdjmZnIg/exec';
 const LS_ENTRIES_KEY = 'dinara-entries-local';
 const LS_SETTINGS_KEY = 'dinara-settings-local';
+// Ye key yaad rakhti hai ki last baar konsa signature CONFIRMED taur par Google Sheet se match
+// karta tha (push safal hone ya pull se milne ke baad). Isse page reload ke baad ye pata chal
+// paata hai ki local data "already synced" hai ya "abhi bhi pending/unconfirmed" — taaki ek
+// stale remote pull kabhi bhi kisi un-synced local entry ko silently delete na kar de.
+const LS_CONFIRMED_SIG_KEY = 'dinara-entries-confirmed-sig';
 let lastSavedSignature = '';
 let syncOk = true;
+function setConfirmedSig(sig){ lastSavedSignature = sig; try{ localStorage.setItem(LS_CONFIRMED_SIG_KEY, sig); }catch(err){} }
 
 function pad2s(n){ return String(n).padStart(2,'0'); }
 function isoOfDate(d){ return d.getFullYear()+'-'+pad2s(d.getMonth()+1)+'-'+pad2s(d.getDate()); }
@@ -668,7 +677,13 @@ function serializeEntries(){
   return JSON.stringify(ENTRIES.map(e=>({date:isoOfDate(e.date), capital:e.capital, pnl:e.pnl, charges:e.charges||0, exchange:e.exchange||'MCX'})));
 }
 
-function setSyncBadge(text){ const el = document.getElementById('syncBadge'); if(el) el.textContent = text; }
+function setSyncBadge(text, warn){
+  const el = document.getElementById('syncBadge');
+  if(!el) return;
+  el.textContent = text;
+  // warn=true → is din ka data abhi tak Google Sheet tak nahi pahuncha, badge red pulse karega jab tak retry safal na ho
+  el.classList.toggle('sync-warn', !!warn);
+}
 
 function saveEntriesLocal(){
   try{ localStorage.setItem(LS_ENTRIES_KEY, serializeEntries()); }catch(err){}
@@ -718,14 +733,30 @@ async function saveEntriesRemote(){
     const payload = serializeEntries();
     if(payload===lastSavedSignature) return;
     await fetch(APPS_SCRIPT_URL + '?key=entries', {method:'POST', body: payload});
-    lastSavedSignature = payload;
+    setConfirmedSig(payload);
     syncOk = true;
     setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
   }catch(err){
+    // Push fail hui — is din ka entry sirf isi browser ke localStorage mein reh gaya, Google Sheet
+    // (aur isliye kisi doosre device / GitHub Pages link) tak nahi pahuncha. lastSavedSignature ko
+    // purane (is entry se pehle wale) value par hi rehne diya — taaki har 8-second poll pe
+    // retrySyncIfNeeded() ko pata chale ki abhi bhi ek pending change hai aur dobara push try kare.
     syncOk = false;
-    setSyncBadge('Saved locally only (sync failed)');
+    setSyncBadge('⚠ Aaj ka data sync nahi hua — retry ho raha hai...', true);
   }
 }
+
+// Failed push ko chup-chaap chhod nahi dete — har poll cycle par (aur connection wapas aane par turant)
+// dobara bhejne ki koshish karte hain. saveEntriesRemote() khud hi no-op ho jaata hai agar current data
+// pehle se hi server par saved signature se match karta ho, isliye ye baar-baar call karna safe hai.
+// syncOk par depend nahi karte — kyunki ek successful GET (pull) syncOk ko true kar deta hai chahe
+// pichla POST (push) fail hi kyun na hua ho; isi wajah se pehle kabhi-kabhi ek din ka data (jaise
+// 16 tarikh) sirf ek hi browser mein reh jaata tha aur dashboard (GitHub Pages / doosre device) par
+// kabhi nahi dikhta tha.
+function retrySyncIfNeeded(){
+  return saveEntriesRemote();
+}
+window.addEventListener('online', retrySyncIfNeeded);
 
 async function saveSettingsRemote(){
   saveSettingsLocal();
@@ -754,7 +785,7 @@ async function loadFromRemote(silent){
       const incomingSig = JSON.stringify(incoming.map(e=>({date:isoOfDate(e.date),capital:e.capital,pnl:e.pnl,charges:e.charges,exchange:e.exchange})));
       if(incomingSig !== lastSavedSignature){
         ENTRIES = incoming;
-        lastSavedSignature = incomingSig;
+        setConfirmedSig(incomingSig);
         saveEntriesLocal();
         if(!isTypingInEntryForm()) rebuildFromEntries();
       }
@@ -763,7 +794,7 @@ async function loadFromRemote(silent){
     if(!silent) setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
   }catch(err){
     syncOk = false;
-    setSyncBadge('Local only (sync unavailable)');
+    setSyncBadge('⚠ Local only (sync unavailable) — retry ho raha hai...', true);
   }
   try{
     const res2 = await fetch(APPS_SCRIPT_URL + '?key=settings');
@@ -791,8 +822,10 @@ async function manualRefresh(){
   const btn = document.getElementById('refreshBtn');
   if(btn){ btn.disabled = true; btn.textContent = '⟳ Refreshing…'; }
   await loadFromRemote(true);
-  rebuildFromEntries();
-  setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+  rebuildFromEntries(true); // true = yahan remote save khud (niche) awaited tareeke se karenge
+  await saveEntriesRemote(); // koi pending (pehle fail hua) push ho to use bhi yahin dobara try kar do
+  // Asli status dikhao — chahe pull ho ya push, jo bhi fail hua ho, "Synced" ka jhoothaa badge nahi dena
+  if(syncOk) setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
   if(btn){ btn.disabled = false; btn.textContent = '⟳ Refresh'; }
 }
 
@@ -914,7 +947,7 @@ function parseInput(text){
     const pnl = iPnl>=0 ? parseFloat((c[iPnl]||'0').replace(/[₹,]/g,'')) : 0;
     const charges = iCharges>=0 ? Math.abs(parseFloat((c[iCharges]||'0').replace(/[₹,]/g,''))) : 0;
     const exchange = iExchange>=0 ? normEx(c[iExchange]) : 'MCX';
-    const key = date.toISOString().slice(0,10) + '|' + exchange;
+    const key = isoOfDate(date) + '|' + exchange; // local calendar date use karo, toISOString() UTC mein convert karke ek din peeche shift kar deta tha (IST mein)
     if(!map.has(key)) map.set(key, {date, capital:0, pnl:0, charges:0, exchange});
     const row = map.get(key);
     row.capital = Math.max(row.capital, isNaN(capital)?0:capital);
@@ -927,8 +960,8 @@ function parseInput(text){
 function upsertEntry(date, capital, pnl, charges, exchange){
   charges = charges || 0;
   exchange = exchange || 'MCX';
-  const key = date.toISOString().slice(0,10) + '|' + exchange;
-  const idx = ENTRIES.findIndex(e=>(e.date.toISOString().slice(0,10)+'|'+e.exchange)===key);
+  const key = isoOfDate(date) + '|' + exchange; // local calendar date — UTC-shift bug se bachne ke liye
+  const idx = ENTRIES.findIndex(e=>(isoOfDate(e.date)+'|'+e.exchange)===key);
   if(idx>=0) ENTRIES[idx] = {date, capital, pnl, charges, exchange};
   else ENTRIES.push({date, capital, pnl, charges, exchange});
   ENTRIES.sort((a,b)=>a.date-b.date || a.exchange.localeCompare(b.exchange));
@@ -1264,7 +1297,7 @@ function buildRawFromEntries(){
   const filtered = exchangeFilter==='ALL' ? ENTRIES : ENTRIES.filter(e=>e.exchange===exchangeFilter);
   const map = new Map();
   filtered.forEach(e=>{
-    const key = e.date.toISOString().slice(0,10);
+    const key = isoOfDate(e.date); // local calendar date — UTC-shift bug se bachne ke liye
     if(!map.has(key)) map.set(key, {date:e.date, capital:0, pnl:0, charges:0});
     const row = map.get(key);
     // Same capital pool is rotated: NFO & BFO in the morning, MCX at night.
@@ -1276,7 +1309,7 @@ function buildRawFromEntries(){
   return [...map.values()].sort((a,b)=>a.date-b.date);
 }
 
-function rebuildFromEntries(){
+function rebuildFromEntries(skipRemoteSave){
   renderEntryTable();
   RAW = buildRawFromEntries();
   if(ENTRIES.length){
@@ -1289,7 +1322,10 @@ function rebuildFromEntries(){
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('emptyState').style.display = 'block';
   }
-  saveEntriesRemote();
+  // skipRemoteSave: manualRefresh() apna khud ka awaited saveEntriesRemote() call karta hai (taaki
+  // asli push-success/fail status jaan kar sahi badge dikha sake) — yahan dobara (untracked) call
+  // karne se race/duplicate push ho sakta tha.
+  if(!skipRemoteSave) saveEntriesRemote();
 }
 
 function showError(msg){
@@ -2133,15 +2169,39 @@ async function initApp(){
   applyMode();
   const el = document.getElementById('entryDate');
   if(el) setEntryDate(new Date());
+  // === CRITICAL FIX (ye asli wajah thi "16 tarikh update nahi ho rahi") ===
+  // Pehle wala code load hote hi lastSavedSignature ko "abhi local mein jo hai wahi confirmed hai"
+  // maan leta tha. Isliye agar pichli baar koi entry (jaise 16 Sept) is browser mein add hone ke
+  // baad Google Sheet tak PUSH hona fail ho gaya tha (chhota internet glitch), to page reload/reopen
+  // karte hi neeche wala loadFromRemote() us purane/incomplete remote data ko "sahi" maan kar is
+  // abhi-tak-un-synced local entry ko localStorage samet hamesha ke liye DELETE kar deta tha —
+  // aur wo entry kabhi kisi bhi device/GitHub Pages link par nahi dikhta tha.
+  // Fix: ek alag localStorage key (dinara-entries-confirmed-sig) mein yaad rakhte hain ki AKHRI
+  // baar konsa data Google Sheet se CONFIRM hua tha (push safal hone ya pull milne par). Load
+  // hote hi wahi "confirmed" value lastSavedSignature mein daalte hain — agar abhi ka local data
+  // usse alag hai (matlab kuchh push hona baaki reh gaya tha), to remote se pull karne se PEHLE
+  // use push karne ki koshish karte hain, taaki koi bhi un-synced din kabhi delete na ho.
+  const hadLocalEntriesBefore = (function(){ try{ return localStorage.getItem(LS_ENTRIES_KEY) !== null; }catch(e){ return false; } })();
   loadFromLocal();
-  lastSavedSignature = serializeEntries();
+  lastSavedSignature = (function(){ try{ return localStorage.getItem(LS_CONFIRMED_SIG_KEY) || ''; }catch(e){ return ''; } })();
   updateActiveCapitalDisplay();
-  rebuildFromEntries();
+  rebuildFromEntries(true); // pehle sirf render karo — remote save yahan khud niche, tarteeb se karenge
   setSyncBadge('Syncing…');
-  await loadFromRemote(false);
-  lastSavedSignature = serializeEntries();
-  rebuildFromEntries();
-  setInterval(()=>{ loadFromRemote(true); }, 8000);
+  // STEP 1: agar is browser mein pehle se koi entry data hai (bilkul naya/khaali browser nahi hai),
+  // to usse pehle push karne ki koshish karo — taaki koi bhi pending/unconfirmed din remote pull se
+  // kabhi overwrite/delete na ho jaaye. (Naye/khaali browser par ye step jaan-bujh kar skip karte
+  // hain, warna ek khaali local state Google Sheet ke real data ko galti se mita sakta tha.)
+  if(hadLocalEntriesBefore) await saveEntriesRemote();
+  await loadFromRemote(false); // STEP 2: ab hi remote se latest (jisme humara push bhi shaamil hai) khinchein
+  rebuildFromEntries(true);
+  // Har 8 second: pehle remote se naya data khinchte hain, phir agar koi entry pichli baar
+  // Google Sheet tak push nahi ho payi thi to usko turant dobara push karte hain.
+  // Isse ek transient internet glitch ki wajah se koi din ka data hamesha ke liye "local only" atka nahi rehta.
+  // PEHLE retry/push, USKE BAAD pull — order jaan-bujh kar aisa rakha hai. Agar pull pehle chal
+  // jaaye aur GET abhi bhi purana/incomplete data laaye (jisme humara pending local change shaamil
+  // na ho), to wahi is bug ko dobara paida kar deta — is baar 8-second poll ke andar. Push-pehle
+  // se connection wapas aate hi pending entry sabse pehle server tak pahunch jaati hai.
+  setInterval(()=>{ retrySyncIfNeeded().then(()=>loadFromRemote(true)); }, 8000);
 }
 initApp();
 
