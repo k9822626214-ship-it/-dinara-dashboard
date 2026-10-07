@@ -407,8 +407,8 @@ Date,Capital,P&L,Exchange
           <div class="field-block" draggable="true" data-field="usedCapital">
             <span class="drag-handle">⋮⋮</span>
             <div class="field-content">
-              <label>Used Capital (Lakh) — 54 likho = ₹54,00,000</label>
-              <input type="number" id="usedCapital" step="any" inputmode="decimal" value="54" oninput="saveUsedCapital()" onchange="saveUsedCapital()">
+              <label id="usedCapitalLabel">Used Capital (Lakh) — auto, upar "Capital Used" se</label>
+              <input type="number" id="usedCapital" step="any" inputmode="decimal" value="54" readonly title="Upar Capital Used me MCX / NFO &amp; BFO badlo" oninput="saveUsedCapital()" onchange="saveUsedCapital()">
               <div class="cap-hint" id="usedCapitalHint"></div>
             </div>
           </div>
@@ -2761,6 +2761,7 @@ function loadUsedCapital(){
 }
 
 function updateLiveClock(){
+  try{ syncUsedCapitalFromExchange(); }catch(e){}
   const el = document.getElementById('liveClock');
   if(!el) return;
   const now = new Date();
@@ -2785,10 +2786,24 @@ function showPeakMarginHint(){
   const v = parseFloat(document.getElementById('peakMargin').value);
   h.textContent = isNaN(v) ? '' : '= ₹' + pmFormatINR(Math.round(v*100000)).replace(/\.00$/,'');
 }
+// 9:00 AM se 3:44 PM = NFO & BFO, baaki samay = MCX
+function pmMarketLabel(d){ const m = d.getHours()*60 + d.getMinutes(); return (m >= 9*60 && m < 15*60 + 45) ? "NFO & BFO" : "MCX"; }
+// Used Capital ko upar wale "Capital Used" (MCX / NFO & BFO) se apne aap bharo
+function syncUsedCapitalFromExchange(){
+  const label = pmMarketLabel(new Date());
+  const rs = (typeof capRs === 'function') ? capRs(label === 'MCX' ? 'capMCX' : 'capNFO') : NaN;
+  const lab = document.getElementById('usedCapitalLabel');
+  if(lab) lab.textContent = 'Used Capital (Lakh) — auto: ' + label + ' ka capital (upar "Capital Used" me badlo)';
+  if(isNaN(rs) || rs <= 0) return;
+  const el = document.getElementById('usedCapital');
+  const lakh = String(+(rs/100000).toFixed(5));
+  if(el && el.value !== lakh){ el.value = lakh; saveUsedCapital(); }
+}
 function pmRupee(n){ return (n < 0 ? "-" : "") + "₹" + pmFormatINR(Math.abs(n)); }
 function pmLakh(rs){ return "₹" + (rs/100000).toFixed(2) + " L"; }
 
 function generateMessage(){
+  syncUsedCapitalFromExchange();
   const pnl = parseFloat(document.getElementById('pnl').value) || 0;
   const openPos = document.getElementById('openPos').value || "0";
   const usedCapital = usedCapitalRs();
@@ -2802,8 +2817,7 @@ function generateMessage(){
 
   // 9:00 AM se 3:44 PM tak = NFO & BFO, 3:45 PM ke baad (aur subah 9 se pehle) = MCX
   const now = new Date();
-  const minutesNow = now.getHours()*60 + now.getMinutes();
-  const marketLabel = (minutesNow >= 9*60 && minutesNow < 15*60 + 45) ? "NFO & BFO" : "MCX";
+  const marketLabel = pmMarketLabel(now);
 
   const MONTHS = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
   const dateStr = now.getDate() + " " + MONTHS[now.getMonth()] + " " + now.getFullYear();
