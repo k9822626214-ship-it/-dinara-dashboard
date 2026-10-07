@@ -415,15 +415,16 @@ Date,Capital,P&L,Exchange
           <div class="field-block" draggable="true" data-field="dayLow">
             <span class="drag-handle">⋮⋮</span>
             <div class="field-content">
-              <label>Day Low (₹) — din ka sabse kam PnL</label>
+              <label>Day Low (₹) — auto: aaj ka sabse kam PnL</label>
               <input type="number" id="dayLow" step="0.01" placeholder="e.g. 344 ya -5200">
             </div>
           </div>
           <div class="field-block" draggable="true" data-field="dayHigh">
             <span class="drag-handle">⋮⋮</span>
             <div class="field-content">
-              <label>Day High (₹) — din ka sabse zyada PnL</label>
+              <label>Day High (₹) — auto: aaj ka sabse zyada PnL</label>
               <input type="number" id="dayHigh" step="0.01" placeholder="e.g. 22291.50">
+              <button type="button" onclick="resetDayHighLow()" style="margin-top:6px;background:none;border:1px solid var(--border);color:var(--sub);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">↺ Aaj ka High/Low reset karo</button>
             </div>
           </div>
           <div class="auto-field" style="margin-top:10px;">
@@ -2799,6 +2800,19 @@ function syncUsedCapitalFromExchange(){
   const lakh = String(+(rs/100000).toFixed(5));
   if(el && el.value !== lakh){ el.value = lakh; saveUsedCapital(); }
 }
+// Day High / Low: har Generate pe PnL ko track karo — har din aur har session (MCX / NFO & BFO) alag
+function pmHLKey(){ const d=new Date(); return 'dinara_hl_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'_'+pmMarketLabel(d); }
+function pmLoadHL(){ try{ const v=JSON.parse(localStorage.getItem(pmHLKey())); return (v && typeof v.high==='number') ? v : null; }catch(e){ return null; } }
+function pmSaveHL(v){ try{ localStorage.setItem(pmHLKey(), JSON.stringify(v)); }catch(e){} }
+function resetDayHighLow(){
+  try{ localStorage.removeItem(pmHLKey()); }catch(e){}
+  document.getElementById('dayLow').value=''; document.getElementById('dayHigh').value='';
+}
+function pmShowHL(){
+  const v=pmLoadHL(); const lo=document.getElementById('dayLow'), hi=document.getElementById('dayHigh');
+  if(!lo || !hi) return;
+  lo.value = v ? v.low : ''; hi.value = v ? v.high : '';
+}
 function pmRupee(n){ return (n < 0 ? "-" : "") + "₹" + pmFormatINR(Math.abs(n)); }
 function pmLakh(rs){ return "₹" + (rs/100000).toFixed(2) + " L"; }
 
@@ -2812,8 +2826,20 @@ function generateMessage(){
   document.getElementById('pnlPctDisplay').value = pnlPctRounded + "%";
 
   const peakL = parseFloat(document.getElementById('peakMargin').value);
-  const dayLow = parseFloat(document.getElementById('dayLow').value);
-  const dayHigh = parseFloat(document.getElementById('dayHigh').value);
+  // Aaj ka High/Low: purana track + haath se bhara value + abhi ka PnL — teeno me se max/min
+  const manualLow = parseFloat(document.getElementById('dayLow').value);
+  const manualHigh = parseFloat(document.getElementById('dayHigh').value);
+  const pnlEntered = document.getElementById('pnl').value.trim() !== '';
+  let hl = pmLoadHL();
+  const pts = [];
+  if(hl){ pts.push(hl.low, hl.high); }
+  if(!isNaN(manualLow)) pts.push(manualLow);
+  if(!isNaN(manualHigh)) pts.push(manualHigh);
+  if(pnlEntered) pts.push(pnl);
+  if(pts.length){ hl = {low: Math.min(...pts), high: Math.max(...pts)}; pmSaveHL(hl); }
+  const dayLow = hl ? hl.low : NaN;
+  const dayHigh = hl ? hl.high : NaN;
+  if(hl){ document.getElementById('dayLow').value = hl.low; document.getElementById('dayHigh').value = hl.high; }
 
   // 9:00 AM se 3:44 PM tak = NFO & BFO, 3:45 PM ke baad (aur subah 9 se pehle) = MCX
   const now = new Date();
@@ -2863,6 +2889,7 @@ loadFieldOrder();
 pmInitDragDrop();
 loadTelegramConfig();
 loadUsedCapital();
+try{ pmShowHL(); }catch(e){}
 updateLiveClock();
 setInterval(updateLiveClock, 1000);
 /* ================= /PNL MESSAGE GENERATOR ================= */
