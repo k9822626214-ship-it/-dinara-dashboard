@@ -382,6 +382,13 @@ Date,Capital,P&L,Exchange
       <div class="pm-grid">
 
         <div class="pm-card" id="dragContainer">
+          <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:11.5px;color:var(--sub);margin-bottom:6px;">Kis exchange ka message?</label>
+            <div class="seg" id="pmSegSwitch" style="height:40px;">
+              <button type="button" data-seg="NFO & BFO" onclick="pmSwitchSeg('NFO & BFO')">NFO &amp; BFO</button>
+              <button type="button" data-seg="MCX" onclick="pmSwitchSeg('MCX')">MCX</button>
+            </div>
+          </div>
           <div class="field-block" draggable="true" data-field="pnl">
             <span class="drag-handle">⋮⋮</span>
             <div class="field-content">
@@ -2787,8 +2794,36 @@ function showPeakMarginHint(){
   const v = parseFloat(document.getElementById('peakMargin').value);
   h.textContent = isNaN(v) ? '' : '= ₹' + pmFormatINR(Math.round(v*100000)).replace(/\.00$/,'');
 }
-// 9:00 AM se 3:44 PM = NFO & BFO, baaki samay = MCX
-function pmMarketLabel(d){ const m = d.getHours()*60 + d.getMinutes(); return (m >= 9*60 && m < 15*60 + 45) ? "NFO & BFO" : "MCX"; }
+// NFO & BFO aur MCX alag-alag: har ek ke PnL, positions, peak margin, capital aur High/Low alag
+var pmSeg = null;
+const PM_SEG_FIELDS = ['pnl','openPos','peakMargin'];
+function pmSegStore(){ try{ return JSON.parse(localStorage.getItem('dinara_pm_seg_vals')) || {}; }catch(e){ return {}; } }
+function pmSaveSegVals(seg){
+  const all = pmSegStore(); all[seg] = {};
+  PM_SEG_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) all[seg][id]=el.value; });
+  try{ localStorage.setItem('dinara_pm_seg_vals', JSON.stringify(all)); }catch(e){}
+}
+function pmLoadSegVals(seg){
+  const v = pmSegStore()[seg] || {};
+  PM_SEG_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.value = v[id] || ''; });
+}
+function pmPaintSeg(){
+  document.querySelectorAll('#pmSegSwitch button').forEach(b=>b.classList.toggle('on', b.dataset.seg===pmSeg));
+}
+function pmSwitchSeg(seg){
+  if(pmSeg && pmSeg !== seg) pmSaveSegVals(pmSeg);
+  pmSeg = seg; pmPaintSeg(); pmLoadSegVals(seg);
+  syncUsedCapitalFromExchange(); pmShowHL();
+  const pct=document.getElementById('pnlPctDisplay'); if(pct) pct.value='';
+}
+function pmInitSeg(){
+  const m = new Date().getHours()*60 + new Date().getMinutes();
+  pmSeg = (m >= 9*60 && m < 15*60 + 45) ? "NFO & BFO" : "MCX";
+  pmPaintSeg(); pmLoadSegVals(pmSeg);
+  PM_SEG_FIELDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input', ()=>pmSaveSegVals(pmSeg)); });
+}
+// Chuna hua exchange; kuch na chuna ho to time se (9:00–3:44 PM = NFO & BFO, baaki = MCX)
+function pmMarketLabel(d){ if(pmSeg) return pmSeg; const m = d.getHours()*60 + d.getMinutes(); return (m >= 9*60 && m < 15*60 + 45) ? "NFO & BFO" : "MCX"; }
 // Used Capital ko upar wale "Capital Used" (MCX / NFO & BFO) se apne aap bharo
 function syncUsedCapitalFromExchange(){
   const label = pmMarketLabel(new Date());
@@ -2889,7 +2924,8 @@ loadFieldOrder();
 pmInitDragDrop();
 loadTelegramConfig();
 loadUsedCapital();
-try{ pmShowHL(); }catch(e){}
+try{ pmInitSeg(); }catch(e){}
+try{ syncUsedCapitalFromExchange(); pmShowHL(); }catch(e){}
 updateLiveClock();
 setInterval(updateLiveClock, 1000);
 /* ================= /PNL MESSAGE GENERATOR ================= */
