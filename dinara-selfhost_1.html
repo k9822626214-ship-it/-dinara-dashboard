@@ -389,6 +389,21 @@ Date,Capital,P&L,Exchange
               <input type="number" id="pnl" step="0.01" placeholder="e.g. 999.35">
             </div>
           </div>
+          <div class="field-block" draggable="true" data-field="openPos">
+            <span class="drag-handle">⋮⋮</span>
+            <div class="field-content">
+              <label>Open Positions</label>
+              <input type="number" id="openPos" placeholder="e.g. 35">
+            </div>
+          </div>
+          <div class="field-block" draggable="true" data-field="peakMargin">
+            <span class="drag-handle">⋮⋮</span>
+            <div class="field-content">
+              <label>Peak Margin Used (Lakh) — jaise 18.25</label>
+              <input type="number" id="peakMargin" step="any" inputmode="decimal" placeholder="e.g. 18.25" oninput="showPeakMarginHint()">
+              <div class="cap-hint" id="peakMarginHint"></div>
+            </div>
+          </div>
           <div class="field-block" draggable="true" data-field="usedCapital">
             <span class="drag-handle">⋮⋮</span>
             <div class="field-content">
@@ -397,11 +412,18 @@ Date,Capital,P&L,Exchange
               <div class="cap-hint" id="usedCapitalHint"></div>
             </div>
           </div>
-          <div class="field-block" draggable="true" data-field="openPos">
+          <div class="field-block" draggable="true" data-field="dayLow">
             <span class="drag-handle">⋮⋮</span>
             <div class="field-content">
-              <label>Open Positions</label>
-              <input type="number" id="openPos" placeholder="e.g. 35">
+              <label>Day Low (₹) — din ka sabse kam PnL</label>
+              <input type="number" id="dayLow" step="0.01" placeholder="e.g. 344 ya -5200">
+            </div>
+          </div>
+          <div class="field-block" draggable="true" data-field="dayHigh">
+            <span class="drag-handle">⋮⋮</span>
+            <div class="field-content">
+              <label>Day High (₹) — din ka sabse zyada PnL</label>
+              <input type="number" id="dayHigh" step="0.01" placeholder="e.g. 22291.50">
             </div>
           </div>
           <div class="auto-field" style="margin-top:10px;">
@@ -2655,11 +2677,11 @@ function pmGetDragAfter(container, y){
 }
 function saveFieldOrder(){
   const order = [...document.querySelectorAll('#dragContainer .field-block')].map(b=>b.dataset.field);
-  try{ localStorage.setItem('dinara_field_order', JSON.stringify(order)); }catch(e){}
+  try{ localStorage.setItem('dinara_field_order_v2', JSON.stringify(order)); }catch(e){}
 }
 function loadFieldOrder(){
   try{
-    const saved = localStorage.getItem('dinara_field_order');
+    const saved = localStorage.getItem('dinara_field_order_v2');
     if(!saved) return;
     const order = JSON.parse(saved);
     const container = document.getElementById('dragContainer');
@@ -2699,9 +2721,19 @@ function sendToTelegram(){
   fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text: finalMessage })
+    body: JSON.stringify({ chat_id: chatId, text: finalMessage, parse_mode: "Markdown" })
   })
   .then(res=>res.json())
+  .then(data=>{
+    // Markdown parse fail ho to bina formatting ke dobara bhejo, message ruke nahi
+    if(!data.ok && /parse/i.test(data.description||'')){
+      return fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: finalMessage.replace(/\*/g,'') })
+      }).then(r=>r.json());
+    }
+    return data;
+  })
   .then(data=>{
     if(data.ok){ status.textContent = "✅ Telegram pe bhej diya!"; status.style.color = "#4ade80"; }
     else { status.textContent = "❌ Fail: " + (data.description || "unknown error"); status.style.color = "#f87171"; }
@@ -2719,7 +2751,9 @@ function saveUsedCapital(){
 function loadUsedCapital(){
   try{
     const saved = localStorage.getItem('dinara_used_capital');
-    const rs = saved !== null ? parseFloat(saved) : 5400000;
+    let rs = saved !== null ? parseFloat(saved) : 5400000;
+    // Purane browser me Lakh wala number (jaise 37) rupees ki jagah save ho gaya ho to use Lakh hi maano
+    if(!isNaN(rs) && rs > 0 && rs < 10000){ rs = rs * 100000; localStorage.setItem('dinara_used_capital', String(rs)); }
     document.getElementById('usedCapital').value = String(+((isNaN(rs)?5400000:rs)/100000).toFixed(5));
     if(saved === null) localStorage.setItem('dinara_used_capital', 5400000);
   }catch(e){}
@@ -2746,6 +2780,14 @@ function pmFormatINR(num){
   return (isNegative ? "-" : "") + formatted;
 }
 
+function showPeakMarginHint(){
+  const h = document.getElementById('peakMarginHint'); if(!h) return;
+  const v = parseFloat(document.getElementById('peakMargin').value);
+  h.textContent = isNaN(v) ? '' : '= ₹' + pmFormatINR(Math.round(v*100000)).replace(/\.00$/,'');
+}
+function pmRupee(n){ return (n < 0 ? "-" : "") + "₹" + pmFormatINR(Math.abs(n)); }
+function pmLakh(rs){ return "₹" + (rs/100000).toFixed(2) + " L"; }
+
 function generateMessage(){
   const pnl = parseFloat(document.getElementById('pnl').value) || 0;
   const openPos = document.getElementById('openPos').value || "0";
@@ -2754,25 +2796,35 @@ function generateMessage(){
   const pnlPctRounded = pnlPct.toFixed(2);
   document.getElementById('pnlPctDisplay').value = pnlPctRounded + "%";
 
+  const peakL = parseFloat(document.getElementById('peakMargin').value);
+  const dayLow = parseFloat(document.getElementById('dayLow').value);
+  const dayHigh = parseFloat(document.getElementById('dayHigh').value);
+
+  // 9:00 AM se 3:44 PM tak = NFO & BFO, 3:45 PM ke baad (aur subah 9 se pehle) = MCX
   const now = new Date();
-  const dateStr = now.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
   const minutesNow = now.getHours()*60 + now.getMinutes();
-  const marketLabel = minutesNow >= (15*60 + 45) ? "MCX" : "NSE/BSE";
+  const marketLabel = (minutesNow >= 9*60 && minutesNow < 15*60 + 45) ? "NFO & BFO" : "MCX";
+
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
+  const dateStr = now.getDate() + " " + MONTHS[now.getMonth()] + " " + now.getFullYear();
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
 
   const isProfit = pnl >= 0;
   const circle = isProfit ? "\u{1F7E2}" : "\u{1F534}";
   const sign = isProfit ? "+" : "";
 
   const lineMap = {
-    pnl: circle + " TODAY: \u20B9" + pmFormatINR(pnl) + " (" + sign + pnlPctRounded + "%)",
-    usedCapital: "\u{1F4B0} USED CAPITAL: \u20B9" + pmFormatINR(usedCapital),
-    openPos: "\u{1F4CC} OPEN POSITIONS: " + openPos
+    pnl: "*" + circle + " TODAY: " + pmRupee(pnl) + " (" + sign + pnlPctRounded + "%)*",
+    openPos: "*\u{1F513} OPEN POSITIONS: " + openPos + "*",
+    peakMargin: "\u{1F53A} PEAK MARGIN USED: " + (isNaN(peakL) ? "\u2014" : pmLakh(peakL*100000)),
+    usedCapital: "\u{1F4B0} USED CAPITAL: " + pmLakh(usedCapital),
+    dayLow: "\u{1F4C9} DAY LOW: " + (isNaN(dayLow) ? "\u2014" : pmRupee(dayLow)),
+    dayHigh: "\u{1F4C8} DAY HIGH: " + (isNaN(dayHigh) ? "\u2014" : pmRupee(dayHigh))
   };
   const order = [...document.querySelectorAll('#dragContainer .field-block')].map(b=>b.dataset.field);
-  const orderedLines = order.map(key=>lineMap[key]).join("\n");
+  const orderedLines = order.map(key=>lineMap[key]).filter(Boolean).join("\n");
 
-  finalMessage = "DINARAALGO\nPnL Update \u2014 " + marketLabel + "\n\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\n" + orderedLines + "\n\n" + dateStr + ", " + timeStr + " IST";
+  finalMessage = "PnL Update — " + marketLabel + "\n——————————————\n" + orderedLines + "\n\n" + dateStr + ", " + timeStr + " IST";
   document.getElementById('pmOutput').value = finalMessage;
 
   if(document.getElementById('autoSend').checked) sendToTelegram();
