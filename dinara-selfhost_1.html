@@ -227,6 +227,9 @@
     .idr-card{padding:24px 20px 28px;}
   }
 
+  .save-btn{min-width:150px;font-weight:700;}
+  .save-btn.unsaved{background:#d97706 !important;color:#fff !important;border-color:#d97706 !important;animation:savePulse 1.4s infinite;}
+  @keyframes savePulse{0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.6);}50%{box-shadow:0 0 0 6px rgba(217,119,6,0);}}
   /* ===== PnL Message Generator (Team View) ===== */
   #pnlMsgPanel .pm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:12px;}
   #pnlMsgPanel .pm-card{background:#0a0f1f;border:1px solid var(--border);border-radius:12px;padding:16px;}
@@ -340,6 +343,7 @@
       </div>
       <div class="efield"><label>P&amp;L (+ / −)</label><input type="number" id="entryPnl" placeholder="e.g. 8200 or -3100" onfocus="this.select()" onkeydown="if(event.key==='Enter'){addEntry();}"></div>
       <button class="act btn-primary" onclick="addEntry()" style="align-self:flex-end;">+ Add Day</button>
+      <button class="act btn-ghost save-btn" id="saveNowBtn" onclick="saveNow()" style="align-self:flex-end;" title="Google Sheet me save karke verify karta hai">✅ Saved</button>
     </div>
     <div class="err-banner" id="errBanner"></div>
     <div id="entryTableWrap" style="display:none;">
@@ -736,7 +740,36 @@ const LS_SETTINGS_KEY = 'dinara-settings-local';
 const LS_CONFIRMED_SIG_KEY = 'dinara-entries-confirmed-sig';
 let lastSavedSignature = '';
 let syncOk = true;
-function setConfirmedSig(sig){ lastSavedSignature = sig; try{ localStorage.setItem(LS_CONFIRMED_SIG_KEY, sig); }catch(err){} }
+function setConfirmedSig(sig){ lastSavedSignature = sig; try{ localStorage.setItem(LS_CONFIRMED_SIG_KEY, sig); }catch(err){} updateSaveBtn(); }
+// === SAVE FIX (27 Oct 2026) ===
+// Entry "gayab" hone ki wajah: 8-second wala pull (GET) kabhi-kabhi naya P&L add hone SE PEHLE shuru ho jaata tha
+// aur purana data lekar baad me lautta tha — tab tak push (POST) ho chuka hota tha, isliye wo purana data "naya"
+// samajh kar local entry ko overwrite kar deta tha. Aur do jaldi-jaldi wale push ulte order me pahunch kar
+// Sheet me purana data chhod sakte the. Ab: (1) har push ek ke baad ek (queue) jaata hai, (2) push ke baad Sheet
+// se wapas padh kar VERIFY karte hain, (3) jab tak local data Sheet par verify na ho, koi pull use overwrite nahi karta.
+let localSeq = 0;          // har local badlaav (add / edit / delete / import) par +1
+let pushInFlight = null;   // abhi chal raha push (promise)
+function isEntriesDirty(){ return serializeEntries() !== lastSavedSignature; }
+function normEntriesSig(arr){
+  return JSON.stringify((arr||[]).map(e=>({date:String(e.date).slice(0,10),capital:Number(e.capital),pnl:Number(e.pnl),charges:Number(e.charges||0),exchange:e.exchange||'MCX'}))
+    .sort((a,b)=>a.date.localeCompare(b.date) || a.exchange.localeCompare(b.exchange)));
+}
+function updateSaveBtn(){
+  const b = document.getElementById('saveNowBtn'); if(!b || b.dataset.busy==='1') return;
+  let dirty = false; try{ dirty = isEntriesDirty(); }catch(e){}
+  b.classList.toggle('unsaved', dirty);
+  b.textContent = dirty ? '💾 Save (unsaved)' : '✅ Saved';
+}
+async function saveNow(){
+  const b = document.getElementById('saveNowBtn');
+  if(b){ b.dataset.busy='1'; b.disabled = true; b.textContent = '⏳ Saving…'; }
+  const ok = await saveEntriesRemote(true);
+  if(b){ b.dataset.busy=''; b.disabled = false; }
+  if(ok){ showError(null); if(b){ b.classList.remove('unsaved'); b.textContent='✅ Saved & verified'; setTimeout(updateSaveBtn, 3000); } }
+  else { showError('❌ Save nahi hua — Google Sheet ne data confirm nahi kiya. Internet check karke dobara "Save" dabao. Data is browser me safe hai.'); updateSaveBtn(); }
+  return ok;
+}
+window.addEventListener('beforeunload', e=>{ try{ if(isEntriesDirty() && ENTRIES.length){ e.preventDefault(); e.returnValue=''; } }catch(err){} });
 
 function pad2s(n){ return String(n).padStart(2,'0'); }
 function isoOfDate(d){ return d.getFullYear()+'-'+pad2s(d.getMonth()+1)+'-'+pad2s(d.getDate()); }
@@ -827,23 +860,34 @@ function loadFromLocal(){
   }catch(err){}
 }
 
-async function saveEntriesRemote(){
+async function saveEntriesRemote(force){
   saveEntriesLocal();
-  try{
+  while(pushInFlight){ try{ await pushInFlight; }catch(e){} }   // ek time pe sirf ek push — order kabhi ulta nahi hoga
+  const run = (async ()=>{
     const payload = serializeEntries();
-    if(payload===lastSavedSignature) return;
-    await fetch(APPS_SCRIPT_URL + '?key=entries', {method:'POST', body: payload});
-    setConfirmedSig(payload);
-    syncOk = true;
-    setSyncBadge('Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
-  }catch(err){
-    // Push fail hui — is din ka entry sirf isi browser ke localStorage mein reh gaya, Google Sheet
-    // (aur isliye kisi doosre device / GitHub Pages link) tak nahi pahuncha. lastSavedSignature ko
-    // purane (is entry se pehle wale) value par hi rehne diya — taaki har 8-second poll pe
-    // retrySyncIfNeeded() ko pata chale ki abhi bhi ek pending change hai aur dobara push try kare.
-    syncOk = false;
-    setSyncBadge('⚠ Aaj ka data sync nahi hua — retry ho raha hai...', true);
-  }
+    if(!force && payload === lastSavedSignature){ updateSaveBtn(); return true; }
+    setSyncBadge('Saving…');
+    try{
+      await fetch(APPS_SCRIPT_URL + '?key=entries', {method:'POST', body: payload});
+      // VERIFY: Sheet se wapas padho — jo bheja wahi wahan hai tabhi "Saved" maanenge
+      const res = await fetch(APPS_SCRIPT_URL + '?key=entries&_=' + Date.now(), {cache:'no-store'});
+      const backText = await res.text();
+      let back = null; try{ back = JSON.parse(backText || '[]'); }catch(e){ back = null; }
+      if(!back || normEntriesSig(back) !== normEntriesSig(JSON.parse(payload))) throw new Error('verify-mismatch');
+      setConfirmedSig(payload);
+      syncOk = true;
+      setSyncBadge('✅ Saved ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
+      return true;
+    }catch(err){
+      // Push / verify fail — data is browser me safe hai (localStorage), aur jab tak Sheet par confirm na ho
+      // koi pull ise overwrite nahi karega. Har 8 second par apne aap dobara try hoga, ya "Save" dabao.
+      syncOk = false;
+      setSyncBadge('⚠ Save nahi hua — "Save" dabao (retry ho raha hai...)', true);
+      return false;
+    }finally{ updateSaveBtn(); }
+  })();
+  pushInFlight = run;
+  try{ return await run; } finally{ if(pushInFlight === run) pushInFlight = null; }
 }
 
 // Failed push ko chup-chaap chhod nahi dete — har poll cycle par (aur connection wapas aane par turant)
@@ -872,9 +916,10 @@ async function saveSettingsRemote(){
 }
 
 async function loadFromRemote(silent){
-  loadFromLocal(); // instant local fill while remote fetch is in flight
+  const seqAtStart = localSeq;
+  if(!isEntriesDirty()) loadFromLocal(); // instant local fill while remote fetch is in flight
   try{
-    const res = await fetch(APPS_SCRIPT_URL + '?key=entries');
+    const res = await fetch(APPS_SCRIPT_URL + '?key=entries&_=' + Date.now(), {cache:'no-store'});
     const text = await res.text();
     if(text){
       const arr = JSON.parse(text);
@@ -883,11 +928,14 @@ async function loadFromRemote(silent){
         return {date:new Date(y,m-1,d), capital:e.capital, pnl:e.pnl, charges:e.charges||0, exchange:e.exchange||'MCX'};
       }).sort((a,b)=>a.date-b.date || a.exchange.localeCompare(b.exchange));
       const incomingSig = JSON.stringify(incoming.map(e=>({date:isoOfDate(e.date),capital:e.capital,pnl:e.pnl,charges:e.charges,exchange:e.exchange})));
-      if(incomingSig !== lastSavedSignature && editEntryIdx === null){
+      // Local me koi bina-verify wala badlaav hai, ya ye GET kisi local badlaav / push se pehle shuru hua tha →
+      // ye (shayad purana) data local entries ko overwrite NAHI karega.
+      const localPending = isEntriesDirty() || pushInFlight || localSeq !== seqAtStart;
+      if(!localPending && incomingSig !== lastSavedSignature && editEntryIdx === null){
         ENTRIES = incoming;
         setConfirmedSig(incomingSig);
         saveEntriesLocal();
-        if(!isTypingInEntryForm()) rebuildFromEntries();
+        if(!isTypingInEntryForm()) rebuildFromEntries(true);
       }
     }
     syncOk = true;
@@ -1520,7 +1568,8 @@ function rebuildFromEntries(skipRemoteSave){
   // skipRemoteSave: manualRefresh() apna khud ka awaited saveEntriesRemote() call karta hai (taaki
   // asli push-success/fail status jaan kar sahi badge dikha sake) — yahan dobara (untracked) call
   // karne se race/duplicate push ho sakta tha.
-  if(!skipRemoteSave) saveEntriesRemote();
+  if(!skipRemoteSave){ localSeq++; saveEntriesRemote(); }
+  updateSaveBtn();
 }
 
 function showError(msg){
@@ -1640,6 +1689,7 @@ function clearData(){
   document.getElementById('metaBadge').textContent = 'No data loaded';
   document.getElementById('entryTableWrap').style.display='none';
   showError(null);
+  localSeq++;
   saveEntriesRemote();
 }
 
@@ -2409,6 +2459,7 @@ async function initApp(){
   const hadLocalEntriesBefore = (function(){ try{ return localStorage.getItem(LS_ENTRIES_KEY) !== null; }catch(e){ return false; } })();
   loadFromLocal();
   lastSavedSignature = (function(){ try{ return localStorage.getItem(LS_CONFIRMED_SIG_KEY) || ''; }catch(e){ return ''; } })();
+  if(!hadLocalEntriesBefore) lastSavedSignature = serializeEntries(); // naya/khaali browser — kuch pending nahi
   updateActiveCapitalDisplay();
   rebuildFromEntries(true); // pehle sirf render karo — remote save yahan khud niche, tarteeb se karenge
   setSyncBadge('Syncing…');
