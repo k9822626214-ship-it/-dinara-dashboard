@@ -341,9 +341,8 @@
         <label>Using Capital</label>
         <div id="activeCapitalDisplay" class="cap-readout">—</div>
       </div>
-      <div class="efield"><label>P&amp;L (+ / −)</label><input type="number" id="entryPnl" placeholder="e.g. 8200 or -3100" onfocus="this.select()" onkeydown="if(event.key==='Enter'){addEntry();}"></div>
-      <button class="act btn-primary" onclick="addEntry()" style="align-self:flex-end;">+ Add Day</button>
-      <button class="act btn-ghost save-btn" id="saveNowBtn" onclick="saveNow()" style="align-self:flex-end;" title="Google Sheet me save karke verify karta hai">✅ Saved</button>
+      <div class="efield"><label>P&amp;L (+ / −)</label><input type="number" id="entryPnl" placeholder="e.g. 8200 or -3100" onfocus="this.select()" onkeydown="if(event.key==='Enter'){saveDay();}"></div>
+      <button class="act btn-primary save-btn" id="saveNowBtn" onclick="saveDay()" style="align-self:flex-end;" title="Entry ko Google Sheet me save karke verify karta hai — verify hone ke baad hi dashboard aur Intraday Report me dikhega">💾 Save</button>
     </div>
     <div class="err-banner" id="errBanner"></div>
     <div id="entryTableWrap" style="display:none;">
@@ -750,6 +749,19 @@ function setConfirmedSig(sig){ lastSavedSignature = sig; try{ localStorage.setIt
 let localSeq = 0;          // har local badlaav (add / edit / delete / import) par +1
 let pushInFlight = null;   // abhi chal raha push (promise)
 function isEntriesDirty(){ return serializeEntries() !== lastSavedSignature; }
+// Dashboard / Intraday Report / cards sirf wahi data dikhate hain jo Google Sheet par SAVE + VERIFY ho chuka hai.
+// Bina Save hue entry sirf "Entries so far" table me "⏳ unsaved" ke saath dikhegi.
+let _confCache = {sig:null, list:[]};
+function confirmedEntries(){
+  if(_confCache.sig === lastSavedSignature) return _confCache.list;
+  let arr = []; try{ arr = JSON.parse(lastSavedSignature || '[]') || []; }catch(e){ arr = []; }
+  const list = arr.map(e=>{ const [y,m,d] = String(e.date).slice(0,10).split('-').map(Number); return {date:new Date(y,m-1,d), capital:Number(e.capital), pnl:Number(e.pnl), charges:Number(e.charges||0), exchange:e.exchange||'MCX'}; })
+    .sort((a,b)=>a.date-b.date || a.exchange.localeCompare(b.exchange));
+  _confCache = {sig:lastSavedSignature, list};
+  return list;
+}
+function entryKeyFull(e){ return isoOfDate(e.date)+'|'+e.exchange+'|'+Number(e.capital)+'|'+Number(e.pnl); }
+function isEntryConfirmed(e){ return confirmedEntries().some(c=>entryKeyFull(c)===entryKeyFull(e)); }
 function normEntriesSig(arr){
   return JSON.stringify((arr||[]).map(e=>({date:String(e.date).slice(0,10),capital:Number(e.capital),pnl:Number(e.pnl),charges:Number(e.charges||0),exchange:e.exchange||'MCX'}))
     .sort((a,b)=>a.date.localeCompare(b.date) || a.exchange.localeCompare(b.exchange)));
@@ -758,14 +770,21 @@ function updateSaveBtn(){
   const b = document.getElementById('saveNowBtn'); if(!b || b.dataset.busy==='1') return;
   let dirty = false; try{ dirty = isEntriesDirty(); }catch(e){}
   b.classList.toggle('unsaved', dirty);
-  b.textContent = dirty ? '💾 Save (unsaved)' : '✅ Saved';
+  b.textContent = dirty ? '💾 Save (pending)' : '💾 Save';
+}
+// "Save" button = entry add + Google Sheet me save + verify. Verify hone ke baad hi dashboard / Intraday Report me dikhega.
+async function saveDay(){
+  const pv = (document.getElementById('entryPnl').value || '').trim();
+  if(pv !== ''){ if(!addEntry()) return false; }
+  else if(!isEntriesDirty()){ showError('Pehle P&L bharo, phir Save dabao.'); return false; }
+  return await saveNow();
 }
 async function saveNow(){
   const b = document.getElementById('saveNowBtn');
   if(b){ b.dataset.busy='1'; b.disabled = true; b.textContent = '⏳ Saving…'; }
   const ok = await saveEntriesRemote(true);
   if(b){ b.dataset.busy=''; b.disabled = false; }
-  if(ok){ showError(null); if(b){ b.classList.remove('unsaved'); b.textContent='✅ Saved & verified'; setTimeout(updateSaveBtn, 3000); } }
+  if(ok){ showError(null); if(b){ b.classList.remove('unsaved'); b.textContent='✅ Saved & verified'; b.dataset.busy='1'; setTimeout(()=>{ b.dataset.busy=''; updateSaveBtn(); }, 3000); } }
   else { showError('❌ Save nahi hua — Google Sheet ne data confirm nahi kiya. Internet check karke dobara "Save" dabao. Data is browser me safe hai.'); updateSaveBtn(); }
   return ok;
 }
@@ -875,6 +894,7 @@ async function saveEntriesRemote(force){
       let back = null; try{ back = JSON.parse(backText || '[]'); }catch(e){ back = null; }
       if(!back || normEntriesSig(back) !== normEntriesSig(JSON.parse(payload))) throw new Error('verify-mismatch');
       setConfirmedSig(payload);
+      try{ if(!isTypingInEntryForm() || document.activeElement.id==='entryPnl') rebuildFromEntries(true); }catch(e){}
       syncOk = true;
       setSyncBadge('✅ Saved ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}));
       return true;
@@ -1458,7 +1478,9 @@ function addEntry(){
   }
   pEl.value = '';
   pEl.focus();
-  rebuildFromEntries();
+  localSeq++;
+  rebuildFromEntries(true); // push yahan nahi — Save button (saveDay) khud save + verify karta hai
+  return true;
 }
 
 function deleteEntry(idx){ if(editEntryIdx===idx) editEntryIdx=null; ENTRIES.splice(idx,1); rebuildFromEntries(); }
@@ -1524,7 +1546,7 @@ function renderEntryTable(){
       }
       return `
       <tr style="border-left:3px solid ${exC};">
-        <td>${e.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</td>
+        <td>${e.date.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}${isEntryConfirmed(e) ? '' : ' <span style="color:#f59e0b;font-size:10.5px;font-weight:700;" title="Abhi Google Sheet par save nahi hua — Save dabao">⏳ unsaved</span>'}</td>
         <td style="color:${exC};font-weight:600;">${e.exchange}</td>
         <td>${fmtINR(e.capital)}</td>
         <td style="color:${exC};font-weight:700">${pnlSign}${fmtINR(e.pnl)}</td>
@@ -1537,7 +1559,8 @@ function renderEntryTable(){
 }
 
 function buildRawFromEntries(){
-  const filtered = exchangeFilter==='ALL' ? ENTRIES : ENTRIES.filter(e=>e.exchange===exchangeFilter);
+  const SRC = confirmedEntries();
+  const filtered = exchangeFilter==='ALL' ? SRC : SRC.filter(e=>e.exchange===exchangeFilter);
   const map = new Map();
   filtered.forEach(e=>{
     const key = isoOfDate(e.date); // local calendar date — UTC-shift bug se bachne ke liye
@@ -1555,7 +1578,7 @@ function buildRawFromEntries(){
 function rebuildFromEntries(skipRemoteSave){
   renderEntryTable();
   RAW = buildRawFromEntries();
-  if(ENTRIES.length){
+  if(confirmedEntries().length){
     document.getElementById('filterBar').style.display = 'flex';
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('emptyState').style.display = 'none';
@@ -1941,7 +1964,7 @@ function render(){
   const totalCharges = rows.reduce((s,r)=>s+r.charges,0);
   const totalNet = totalPnl - totalCharges;
   const capExchange = exchangeFilter==='MCX' ? 'MCX' : 'NFO & BFO'; // "All" and "NFO & BFO" both use the NFO & BFO capital pool
-  const capEntriesInScope = ENTRIES.filter(e=>{
+  const capEntriesInScope = confirmedEntries().filter(e=>{
     if(e.exchange!==capExchange) return false;
     if(customRange){ const iso = isoOfDate(e.date); return iso>=isoOf(customRange.start) && iso<=isoOf(customRange.end); }
     if(monthFilter) return e.date.getFullYear()===monthFilter.year && e.date.getMonth()===monthFilter.month;
@@ -2559,9 +2582,9 @@ function idrCardHtml(name, d){
 }
 
 function openIntradayReport(){
-  if(!ENTRIES.length){ alert('Pehle entries load karo — abhi koi data nahi hai.'); return; }
+  if(!confirmedEntries().length){ alert('Pehle entries Save karo — abhi koi saved data nahi hai.'); return; }
   const groups = {};
-  ENTRIES.forEach(e=>{
+  confirmedEntries().forEach(e=>{
     const name = IDR_NAME[e.exchange] || e.exchange;
     (groups[name] = groups[name] || []).push(e);
   });
