@@ -275,9 +275,9 @@
       <button class="act btn-ghost" id="mcxBtn" style="padding:8px 12px;font-size:12px;" onclick="openMcx()">🥇 Backtest MCX</button>
       <button class="act btn-ghost" id="portfolio18Btn" style="padding:8px 12px;font-size:12px;" onclick="openP18()">💼 15 Lac Portfolio</button>
       <div style="position:relative;">
-        <button class="act btn-ghost" id="pmOpenBtn" style="padding:8px 12px;font-size:12px;" onclick="openPnlMsg()">📨 PnL Message</button>
+        <button class="act btn-ghost" id="pmOpenBtn" aria-label="Office" style="padding:8px 11px;font-size:13px;line-height:1;color:var(--sub);opacity:.75;" onclick="openPnlMsg()">✦</button>
         <div class="dp-panel" id="pmPwPanel" style="display:none;width:230px;">
-          <div style="font-size:11.5px;color:var(--sub);margin-bottom:8px;">PnL Message ke liye password daalo</div>
+          <div style="font-size:11.5px;color:var(--sub);margin-bottom:8px;">Password</div>
           <input type="password" id="pmPwInput" placeholder="Password"
             style="width:100%;background:#0a0f1f;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px;"
             onkeydown="if(event.key==='Enter'){submitPmPassword();}">
