@@ -183,6 +183,8 @@
   #mcxOverlay.bt-open{display:flex;}
   #mcxFrame{flex:1 1 auto;width:100%;border:0;background:#0d0d0d;}
   /* ===== Launched Strategies Reports button ===== */
+  .lsr-row{flex-basis:100%;order:99;display:flex;justify-content:center;padding-top:4px}
+  .lsr-row .lsr-btn{font-size:14px;padding:10px 20px}
   .lsr-btn{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12.5px;text-decoration:none;white-space:nowrap;
     padding:8px 14px;border-radius:9px;background:linear-gradient(135deg,#F5B942,#F2762E);color:#2A1300;
     box-shadow:0 0 0 1px #FFD58066,0 0 18px #F5B94288;transition:transform .18s ease,box-shadow .18s ease}
@@ -283,7 +285,9 @@
       <button class="act btn-ghost" id="backtestBtn" style="padding:8px 12px;font-size:12px;" onclick="openBacktest()">📊 50 Lac Portfolio</button>
       <button class="act btn-ghost" id="mcxBtn" style="padding:8px 12px;font-size:12px;" onclick="openMcx()">🥇 Backtest MCX</button>
       <button class="act btn-ghost" id="portfolio18Btn" style="padding:8px 12px;font-size:12px;" onclick="openP18()">💼 15 Lac Portfolio</button>
-      <a class="lsr-btn" id="launchedReportsBtn" href="launched-strategies-reports.html" target="_blank" rel="noopener">🚀 Dinara Algos – Launched Strategies Reports <span class="lsr-new">NEW</span></a>
+      <div class="lsr-row">
+        <a class="lsr-btn" id="launchedReportsBtn" href="launched-strategies-reports.html" target="_blank" rel="noopener">🚀 Dinara Algos – Launched Strategies Reports <span class="lsr-new">NEW</span></a>
+      </div>
       <div style="position:relative;">
         <button class="act btn-ghost" id="pmOpenBtn" aria-label="Office" style="padding:8px 11px;font-size:13px;line-height:1;color:var(--sub);opacity:.75;" onclick="openPnlMsg()">✦</button>
         <div class="dp-panel" id="pmPwPanel" style="display:none;width:230px;">
