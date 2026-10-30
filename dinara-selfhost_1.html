@@ -2434,8 +2434,12 @@ function renderMonthWisePNL(rows){
   // row ko, baaki purane months normal size/style mein hi rehte hain.
   const now = new Date();
   const curYear = now.getFullYear(), curMonth = now.getMonth();
+  // Kuch months ka % ek fixed capital par dikhana hai (All / NFO & BFO view me) — jaise Oct 2026 ko
+  // poore ₹50 lakh par, chahe kuch din sirf MCX (₹30L) ki entry ho. Key = 'YYYY-M' (M = 0-based month).
+  const MONTH_CAPITAL_OVERRIDE = { '2026-9': 5000000 };
   const rowsHtml = months.map(m=>{
-    const avgCap = m.capCount ? m.capSum/m.capCount : 0;
+    const ovCap = exchangeFilter !== 'MCX' ? MONTH_CAPITAL_OVERRIDE[m.year+'-'+m.month] : undefined;
+    const avgCap = ovCap || (m.capCount ? m.capSum/m.capCount : 0);
     const pct = avgCap ? (m.net/avgCap*100) : 0;
     const label = new Date(m.year, m.month, 1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'});
     const isRunning = (m.year===curYear && m.month===curMonth);
